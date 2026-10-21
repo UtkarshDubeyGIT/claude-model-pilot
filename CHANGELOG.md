@@ -7,7 +7,7 @@
 - Require independent evidence that the expected route was applied, reject malformed schedule answers safely, and preserve source/version fingerprints in new benchmark runs.
 - Add targeted benchmark sections and elapsed-time progress so long final sessions remain understandable.
 - Preserve sanitized Jev Choice signals and rejection reasons when the provider abstains. Version the question rubric and acceptance policy separately; keep the 0.95 acceptance gates unchanged.
-- Clarify Jev's rubric for mechanical work, code reasoning, interacting constraints and task independence. Live improvement from the revised rubric remains to be measured.
+- Clarify Jev's rubric for mechanical work, code reasoning, interacting constraints and task independence. A post-release six-case live rerun of the unchanged 0.5.0 source confirmed both simple routes to Haiku/low, with four conservative abstentions and six correct, strictly formatted answers. Broader calibration remains necessary.
 - Add `/route profiles` to expose versioned profiles and resolved model IDs. Existing routing profiles and Opus planning protections stay unchanged.
 - Preserve the selected model if the optional Haiku classifier fails or abstains. Sanitize classifier usage counters before displaying them.
 - Document that the six expanded-benchmark routing cases all abstained; no switching or net savings was demonstrated in those cases.

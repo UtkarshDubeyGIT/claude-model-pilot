@@ -18,10 +18,14 @@ An earlier seven-turn real-provider test verified Jev's simple/routine/complex r
 
 The broader benchmark then completed 131 sessions and 146 answer turns. All 120 direct matrix answers were semantically correct, 97 met the strict JSON-only requirement, and all 20 planning turns preserved their chosen Opus profile. All six routed corpus cases called Jev but abstained before dispatch. The old trace did not explain why they abstained. The public [results and limitations](benchmark-results.md) and [sanitized aggregate](../benchmarks/results/2026-10-22.json) are the authoritative record.
 
-## Changes requiring fresh live calibration
+## Live verification of 0.5.0
 
 This release adds explicit abstention reasons, bounded provider signals, a revised task rubric and inspectable profiles. It retains the 0.95 gates and existing default profiles. A failed optional Haiku classifier now preserves the model instead of falling back to local keyword guesses.
 
-Synthetic integration and native tests verify these behaviors. They cannot establish that the revised Jev rubric improves real acceptance or accuracy. Re-run the routed corpus with the new diagnostics before claiming that the six abstentions are resolved. Raw evaluation logs remain local and ignored by Git; no API key or user transcript is needed in a public bug report.
+A targeted live run completed all six routed corpus cases against the exact released implementation: every recorded source hash matched release commit `4dce72fb0a1255e4abd23e9bbe4f79f8bb08b60d`. Jev 1.13.0 accepted the extraction and arithmetic tasks as simple; independent request observations and API identity confirmed both Haiku/low routes. The other four responses had complexity confidence and selected-option probability below 0.95, so they remained on Opus/high. All six answers were semantically correct and bare JSON. Total reported Claude cost was $0.0258539, excluding TypeSafe charges.
+
+The raw complexity choice matched the benchmark label in five cases. The transaction-invariant case favored routine over the benchmark's complex label at low confidence; the gate prevented a downgrade. Matching a task label alone is not proof that a model is optimal. These six observations do not justify weakening thresholds. The router-only run did not repeat planning; planning evidence remains the earlier 20 live turns plus the complete offline suite.
+
+See the [sanitized rerun evidence](../benchmarks/results/2026-10-22-router-0.5.0.json) and the [detailed findings](benchmark-results.md#targeted-live-rerun--model-pilot-050). Raw evaluation logs remain local and ignored by Git; no API key or user transcript is needed in a public bug report.
 
 API-reported identity confirms the response model. Tests observe the requested effort, not the provider's internal effective reasoning. No net token savings, monetary savings, general capability ranking or production readiness is claimed.

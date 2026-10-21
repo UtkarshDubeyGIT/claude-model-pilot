@@ -66,6 +66,8 @@ Use Claude Code's `/model` to select a model manually; doing so pins routing. Mo
 
 The first live sweep completed **131 sessions / 146 answer turns** across four current tiers and five named effort levels. The 120 direct model answers were semantically correct; **97/120 also met the strict output-format contract**. All 20 Opus planning turns retained their selected model and effort. Jev abstained on all six routed corpus prompts, so those cases stayed on Opus/high and demonstrated no switching savings.
 
+A targeted live rerun of **0.5.0** then confirmed both simple tasks routing to **Haiku/low**. The other four cases safely retained Opus/high because their complexity signals were below the acceptance thresholds. All six answers were correct and strict JSON. This verifies two applied routes; it does not establish general routing accuracy or net savings. The targeted run did not repeat the planning suite.
+
 See the [results and recommendations](docs/benchmark-results.md) and [benchmark guide](docs/benchmark.md). This is one repetition of six short tasks, not evidence of a universal best model or enterprise readiness. TypeSafe monetary overhead is excluded. API-reported identity verifies the model, not the provider's effective reasoning effort.
 
 Switching models can lose prompt-cache reuse. Context limits and a cooldown reduce unnecessary switching; they are heuristics, not a calculation of financial break-even. Existing conversations with missing context measurements remain protected. A verified fresh session can route before its first usage measurement.

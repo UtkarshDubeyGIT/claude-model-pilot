@@ -65,7 +65,7 @@ Opus/max was about **22× slower and 12× more expensive than high** in this par
 
 ## How recommendations should improve
 
-1. **Diagnose abstentions before relaxing safeguards.** Record bounded labels, confidence summaries, provider status and explicit rejection reasons. Do not record API keys, full prompts or raw provider bodies. Re-run the six router cases with this visibility before claiming a live fix.
+1. **Diagnose abstentions before relaxing safeguards.** Record bounded labels, confidence summaries, provider status and explicit rejection reasons. Do not record API keys, full prompts or raw provider bodies. Re-run the six router cases with this visibility before claiming a live fix. The [targeted rerun below](#targeted-live-rerun--model-pilot-050) now provides that evidence for two applied simple routes and four explained abstentions.
 2. **Separate classification from policy.** Jev supplies task characteristics; a configurable policy chooses model and effort. Keep ongoing planning, manual choices, dependent follow-ups and warmed context protected. Do not turn small evaluation wins into automatic global downgrades.
 3. **Measure output constraints separately.** Machine-readable output is a workload requirement. The same meaningful answer can still fail an integration if it has commentary or fences. Use structured output support where available; do not silently retry, reformat or switch models without counting the added cost.
 4. **Calibrate on representative tasks.** Add enterprise code editing with executable tests, debugging across files, tool use, longer contexts, security/architecture review and deliberately ambiguous prompts. Include held-out variants and repeat trials before changing thresholds or default profiles.
@@ -78,3 +78,32 @@ Total reported Claude cost was **$2.180765**: matrix $0.873923, routed tasks $0.
 The six tasks cover record extraction, integer arithmetic, JavaScript behavior, interval boundaries, a constrained schedule and a transaction invariant. There was one sample per combination, no tool execution and no long autonomous coding. Prompts were identical across combinations and shuffled with a fixed seed; provider caches still influenced cost and speed. The continuity corpus tested retention, not whether the plans were production-ready.
 
 For methods, supported tiers and the official Anthropic sources, see [benchmark methodology](benchmark.md). For future runs, the runner now prints per-answer progress and 30-second elapsed-time updates, and enforces its existing response deadline.
+
+## Targeted live rerun — Model Pilot 0.5.0
+
+On 22 October 2026, a fresh live run completed **6/6 router sessions** using the released **0.5.0** package and plugin. Every recorded source-file hash matches release commit `4dce72fb0a1255e4abd23e9bbe4f79f8bb08b60d`; the source manifest fingerprint also matches. [Sanitized follow-up evidence](../benchmarks/results/2026-10-22-router-0.5.0.json) preserves the aggregate metrics and bounded diagnostic signals. The original baseline above remains unchanged.
+
+All **six answers were correct and strict JSON**. Both simple tasks were accepted by Jev and actually changed from Opus/high to **Haiku/low**. For each change, the independent request observer, routing trace and returned API model agreed, with one dispatch attempt and one confirmed model change. There were no accepted recommendations that failed to apply.
+
+The other **four tasks abstained and kept Opus/high**. Their complexity confidence and selected-label probability were below the unchanged **0.95 / 0.95** acceptance thresholds. Independence was scored 1.0 in every case, so context dependence did not cause these abstentions. The diagnostics now explain why these routes stayed unchanged.
+
+| Task | Corpus label | Jev raw label | Confidence | Selected probability | Outcome | Confirmed model / requested effort |
+|---|---|---|---:|---:|---|---|
+| transaction_invariant | complex | routine | 0.40 | 0.55 | Abstained; kept | Opus 5.5 / high |
+| extract_records | simple | simple | 0.97 | 0.98 | Accepted; changed | Haiku 5.5 / low |
+| integer_arithmetic | simple | simple | 1.00 | 1.00 | Accepted; changed | Haiku 5.5 / low |
+| javascript_trace | routine | routine | 0.79 | 0.84 | Abstained; kept | Opus 5.5 / high |
+| constrained_schedule | complex | complex | 0.80 | 0.85 | Abstained; kept | Opus 5.5 / high |
+| interval_boundaries | routine | routine | 0.72 | 0.79 | Abstained; kept | Opus 5.5 / high |
+
+Raw complexity labels matched the corpus **5/6 times**. The write-skew transaction question was labeled routine instead of the corpus’s complex label, with only 0.40 confidence and 0.55 selected probability; it was rejected, preserving Opus. A bounded textbook question can be different from reviewing a production transaction design, so this disagreement warrants clearer labels and more examples, not an automatic decision to trust either label on every related task.
+
+The strict routing benchmark reports **2/6 passes** because it requires both an accepted expected classification and the expected profile. That does not mean four answers failed or four model applications broke: all four were explicit safe abstentions. The requested profile matched the corpus profile in **4/6** cases because the two complex tasks were already on Opus/high. Actual observed requests, trace requests and returned API models agreed in **6/6** cases.
+
+Observed answer-turn wall time totaled **15.700 seconds**, with a **2.2345-second median**. Claude cost totaled **$0.0258539**. Jev was called **six times** and reported **4,771 classifier tokens**. TypeSafe monetary charges are unavailable. These measurements include the classifier’s contribution to answer latency but exclude CLI startup; they do not establish net savings against the earlier run.
+
+This was a **router-only rerun**. It did not rerun the 120-answer model matrix or the 20 planning-continuity turns; the earlier continuity evidence remains the basis for that finding.
+
+### Next calibration step
+
+Keep the current acceptance thresholds and planning protections. The fresh run confirms that accepted simple routes can be applied correctly and that low-confidence decisions fail safely, but a six-task sample is too small to justify loosening the thresholds. Build a larger labeled calibration set with held-out task variants, repeated Jev calls, and separate examples of bounded code reasoning versus production-impacting work. Measure accepted-label accuracy and coverage by class, risky downgrade rates, actual route application, answer quality and formatting separately. Evaluate proposed thresholds offline on those held-out cases before enabling a change. Continue to preserve manual model/effort choices and ongoing planning.

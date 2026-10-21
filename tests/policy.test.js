@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as policy from '../src/policy.js';
 const decide = (overrides = {}) => {
   assert.equal(typeof policy.recommend, 'function', 'routing policy must exist');
-  return policy.recommend({ text: 'What does HTTP stand for?', model: 'claude-opus-5-5', effort: 'high', turn: 1, contextTokens: 0, ...overrides });
+  return policy.recommend({ text: 'What does HTTP stand for?', model: 'claude-opus-5-5', effort: 'high', turn: 1, contextTokens: 0, requirementsMet: true, ...overrides });
 };
 test('a standalone definition can use Haiku and low effort', () => {
   const r = decide(); assert.equal(r.model, 'haiku'); assert.equal(r.effort, 'low');
@@ -29,10 +29,10 @@ test('unknown models, attachments and ambiguous prompts fail conservatively', ()
 });
 test('a simple question in an active task needs an explicit topic boundary', () => {
   assert.equal(decide({ activeTask: true }).action, 'keep');
-  assert.equal(decide({ text: 'Unrelated question: what does HTTP stand for?', activeTask: true }).model, 'haiku');
+  assert.equal(decide({ text: 'Unrelated question: what does HTTP stand for?', activeTask: true }).action, 'keep');
 });
 test('risk signals outrank simplicity and promote weak models', () => {
-  const r = decide({ model: 'haiku', text: 'Fix a production authentication bypass and data loss bug' });
+  const r = decide({ model: 'haiku', text: 'Fix a production authentication bypass and data loss bug', requireClassifier:true, classification:{kind:'complex',independent:true,confidence:1} });
   assert.equal(r.model, 'opus'); assert.equal(r.effort, 'high');
 });
 test('code implementation is not classified as a trivial definition', () => {

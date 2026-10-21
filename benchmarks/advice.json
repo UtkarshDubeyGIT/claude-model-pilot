@@ -1,0 +1,1626 @@
+{
+  "schemaVersion": 1,
+  "labelVersion": 1,
+  "policyUse": "Calibration may inform changes. Do not tune against heldout scores. Synthetic replay does not measure Jev accuracy.",
+  "scenarios": [
+    {
+      "id": "simple-1",
+      "split": "calibration",
+      "category": "simple",
+      "prompt": "Extract names from Ana:4, Bo:2. Return only JSON {\"names\":[...]}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "names": [
+            "Ana",
+            "Bo"
+          ]
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-2",
+      "split": "calibration",
+      "category": "simple",
+      "prompt": "What does DNS stand for? Return only JSON {\"expansion\":\"...\"}.",
+      "current": {
+        "model": "haiku",
+        "effort": "low"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "expansion": "Domain Name System"
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-3",
+      "split": "calibration",
+      "category": "simple",
+      "prompt": "Compute 17 + 25. Return only JSON {\"sum\":number}.",
+      "current": {
+        "model": "haiku",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "sum": 42
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-4",
+      "split": "calibration",
+      "category": "simple",
+      "prompt": "Sort [4,1,3,2] ascending. Return only JSON {\"values\":[...]}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 24000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "values": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-5",
+      "split": "heldout",
+      "category": "simple",
+      "prompt": "Lowercase HELLO. Return only JSON {\"text\":\"...\"}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "text": "hello"
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-6",
+      "split": "heldout",
+      "category": "simple",
+      "prompt": "Count vowels in banana. Return only JSON {\"count\":number}.",
+      "current": {
+        "model": "haiku",
+        "effort": "low"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "count": 3
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-7",
+      "split": "heldout",
+      "category": "simple",
+      "prompt": "Extract unique IDs from A7,B2,A7. Preserve first appearance. Return only JSON {\"ids\":[...]}.",
+      "current": {
+        "model": "haiku",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "ids": [
+            "A7",
+            "B2"
+          ]
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "simple-8",
+      "split": "heldout",
+      "category": "simple",
+      "prompt": "Compute 9 * 8. Return only JSON {\"product\":number}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 24000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "product": 72
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-1",
+      "split": "calibration",
+      "category": "routine",
+      "prompt": "Write a Python function that removes duplicates while preserving input order for a list of strings. Include tests.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-2",
+      "split": "calibration",
+      "category": "routine",
+      "prompt": "Explain why JavaScript [1,2,3].map(x => x*2) returns [2,4,6].",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-3",
+      "split": "calibration",
+      "category": "routine",
+      "prompt": "Write a TypeScript function that sums finite positive numbers, ignoring NaN and Infinity. Include tests.",
+      "current": {
+        "model": "sonnet",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-4",
+      "split": "calibration",
+      "category": "routine",
+      "prompt": "Implement a CSS tooltip that is accessible by keyboard and pointer.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 24000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-5",
+      "split": "heldout",
+      "category": "routine",
+      "prompt": "Write a Python function to merge two already sorted integer lists in linear time. Include edge cases.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-6",
+      "split": "heldout",
+      "category": "routine",
+      "prompt": "Explain the difference between SQL INNER JOIN and LEFT JOIN using a two-row example.",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-7",
+      "split": "heldout",
+      "category": "routine",
+      "prompt": "Write a JavaScript function that validates a YYYY-MM-DD calendar date without normalizing invalid dates.",
+      "current": {
+        "model": "sonnet",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "routine-8",
+      "split": "heldout",
+      "category": "routine",
+      "prompt": "Refactor this Python function without changing behavior: def twice(x):\n return x+x",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 24000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-1",
+      "split": "calibration",
+      "category": "deeper",
+      "prompt": "Design a zero-downtime database migration with dual writes, invariants and rollback.",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-2",
+      "split": "calibration",
+      "category": "deeper",
+      "prompt": "Analyze a distributed payment ledger for double charging under retries and network partitions.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-3",
+      "split": "calibration",
+      "category": "deeper",
+      "prompt": "Prove that every finite tree with at least two vertices has at least two leaves.",
+      "current": {
+        "model": "opus",
+        "effort": "low"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-4",
+      "split": "calibration",
+      "category": "deeper",
+      "prompt": "Design a production authentication boundary for multi-tenant data and give adversarial tests.",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-5",
+      "split": "heldout",
+      "category": "deeper",
+      "prompt": "Derive a safe recovery protocol for partially committed transactions across two services.",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-6",
+      "split": "heldout",
+      "category": "deeper",
+      "prompt": "Compare optimistic and pessimistic concurrency for a high-contention inventory system. Analyze correctness.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-7",
+      "split": "heldout",
+      "category": "deeper",
+      "prompt": "Prove the loop invariant and termination of Euclid\u2019s algorithm over positive integers.",
+      "current": {
+        "model": "opus",
+        "effort": "low"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "deeper-8",
+      "split": "heldout",
+      "category": "deeper",
+      "prompt": "Design an incident response plan for possible signing-key exposure with staged revocation.",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-1",
+      "split": "calibration",
+      "category": "output_constraints",
+      "prompt": "Return exactly one JSON object containing count 3 and valid true. No prose or fences.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "count": 3,
+          "valid": true
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-2",
+      "split": "calibration",
+      "category": "output_constraints",
+      "prompt": "Count the distinct values in [1,1,2,3,3]. Return only JSON {\"count\":number}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "count": 3
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-3",
+      "split": "calibration",
+      "category": "output_constraints",
+      "prompt": "Trace JavaScript: let x=1; let y=x++; Return only JSON {\"x\":number,\"y\":number}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "x": 2,
+          "y": 1
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-4",
+      "split": "calibration",
+      "category": "output_constraints",
+      "prompt": "Produce a regulator-ready cryptographic proof in exactly 12 words with no symbols; all assumptions must be explicit.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-5",
+      "split": "heldout",
+      "category": "output_constraints",
+      "prompt": "Return only JSON with \"quoted\" equal to the string a\"b and \"newline\" equal to a single newline.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "quoted": "a\"b",
+          "newline": "\n"
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-6",
+      "split": "heldout",
+      "category": "output_constraints",
+      "prompt": "Convert 1 hour 20 minutes into seconds. Return only JSON {\"seconds\":number}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "haiku/low",
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "seconds": 4800
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-7",
+      "split": "heldout",
+      "category": "output_constraints",
+      "prompt": "Trace Python: a=[1]; b=a; b.append(2). Return only JSON {\"a\":[...],\"b\":[...]}.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "routine",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": true,
+        "acceptableProfiles": [
+          "sonnet/medium",
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": {
+          "a": [
+            1,
+            2
+          ],
+          "b": [
+            1,
+            2
+          ]
+        },
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "output_constraints-8",
+      "split": "heldout",
+      "category": "output_constraints",
+      "prompt": "Generate a complete ISO compliance certificate for this unspecified system, with no missing evidence.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": true,
+        "contextTokens": 0,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "complex",
+        "independent": true,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-1",
+      "split": "calibration",
+      "category": "ambiguous",
+      "prompt": "Make it better.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-2",
+      "split": "calibration",
+      "category": "ambiguous",
+      "prompt": "Fix the error in the file I mentioned.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-3",
+      "split": "calibration",
+      "category": "ambiguous",
+      "prompt": "Can we use the other approach?",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-4",
+      "split": "calibration",
+      "category": "ambiguous",
+      "prompt": "Optimize this for the customer.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-5",
+      "split": "heldout",
+      "category": "ambiguous",
+      "prompt": "How much does that save?",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-6",
+      "split": "heldout",
+      "category": "ambiguous",
+      "prompt": "Do the same thing in the second repository.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-7",
+      "split": "heldout",
+      "category": "ambiguous",
+      "prompt": "Is this safe enough?",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "ambiguous-8",
+      "split": "heldout",
+      "category": "ambiguous",
+      "prompt": "Which option should we choose?",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 2000,
+        "permissionKnown": true
+      },
+      "label": {
+        "kind": "unknown",
+        "independent": false,
+        "requirementsMet": false,
+        "advice": false,
+        "acceptableProfiles": [],
+        "rationale": "Assess mandatory quality first; lower cost may justify advice even if the current profile is also adequate."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-1",
+      "split": "calibration",
+      "category": "continuity",
+      "prompt": "Plan a tenant isolation design.",
+      "current": {
+        "model": "opus",
+        "effort": "low"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/low"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-2",
+      "split": "calibration",
+      "category": "continuity",
+      "prompt": "Continue with the failure cases.",
+      "current": {
+        "model": "opus",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": false
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/medium"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-3",
+      "split": "calibration",
+      "category": "continuity",
+      "prompt": "Unrelated question: what does HTTP stand for?",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": false
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-4",
+      "split": "calibration",
+      "category": "continuity",
+      "prompt": "Implement it and add tests.",
+      "current": {
+        "model": "opus",
+        "effort": "xhigh"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": false
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/xhigh"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-5",
+      "split": "heldout",
+      "category": "continuity",
+      "prompt": "Return to the original plan.",
+      "current": {
+        "model": "opus",
+        "effort": "max"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": true
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/max"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-6",
+      "split": "heldout",
+      "category": "continuity",
+      "prompt": "Yes, proceed.",
+      "current": {
+        "model": "opus",
+        "effort": "low"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": false
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/low"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-7",
+      "split": "heldout",
+      "category": "continuity",
+      "prompt": "Define DNS.",
+      "current": {
+        "model": "opus",
+        "effort": "medium"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": false
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/medium"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    },
+    {
+      "id": "continuity-8",
+      "split": "heldout",
+      "category": "continuity",
+      "prompt": "Now fix the production authorization issue.",
+      "current": {
+        "model": "opus",
+        "effort": "high"
+      },
+      "context": {
+        "freshSession": false,
+        "contextTokens": 6000,
+        "permissionKnown": true,
+        "activeTask": true,
+        "planMode": false
+      },
+      "label": {
+        "kind": "simple",
+        "independent": true,
+        "requirementsMet": true,
+        "advice": false,
+        "acceptableProfiles": [
+          "opus/high"
+        ],
+        "rationale": "Continuity is mandatory."
+      },
+      "answerRubric": {
+        "goldJSON": null,
+        "correctness": "Exact gold value when supplied; otherwise human review against task requirements.",
+        "functionality": "All requested behavior and edge cases; code must be independently executed before passing.",
+        "format": "Bare JSON when goldJSON is supplied; otherwise follow the stated output contract.",
+        "depthPolish": "Human score 1-5; distinguish depth from mandatory quality."
+      }
+    }
+  ]
+}

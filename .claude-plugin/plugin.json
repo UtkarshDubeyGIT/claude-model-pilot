@@ -1,6 +1,6 @@
 {
   "name": "model-pilot",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Suggest models and reasoning effort while preserving task continuity",
   "author": {
     "name": "Model Pilot contributors"

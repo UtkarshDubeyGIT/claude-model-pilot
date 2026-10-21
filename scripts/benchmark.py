@@ -24,6 +24,7 @@ def load_specs():
 
 def source_metadata():
     paths=[ROOT/'package.json',ROOT/'.claude-plugin/plugin.json',ROOT/'hooks/hooks.json',ROOT/'benchmarks/models.json',ROOT/'benchmarks/tasks.json',ROOT/'scripts/benchmark.py']
+    paths+=list((ROOT/'scripts').glob('*.py'))+[ROOT/'benchmarks/advice.json']
     paths+=list((ROOT/'src').rglob('*.js'))+list((ROOT/'hooks').rglob('*.js'))
     files={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(paths)}
     return {'package_version':json.loads((ROOT/'package.json').read_text())['version'],
@@ -157,7 +158,7 @@ def score_routing(turn, task, trace):
     turn['classification_passed']=trace.get('classifierCalls')==1 and provider.get('status')=='accepted' and classification.get('kind')==task['kind'] and classification.get('independent') is True
     turn['valid_dispatch']=valid_dispatch(turn,model,effort)
     trace_matches=request.get('model')==model and request.get('effort')==effort and request.get('apiModel')==model
-    switch_confirmed=task['kind']=='complex' or (detail.get('application')=='confirmed-model' and trace.get('dispatchAttempts')==1 and trace.get('confirmedRoutedTurns')==1)
+    switch_confirmed=task['kind']=='complex' or (detail.get('application')=='confirmed-model' and trace.get('counters',{}).get('dispatched',trace.get('dispatchAttempts'))==1 and trace.get('counters',{}).get('confirmed',trace.get('confirmedRoutedTurns'))==1)
     turn['profile_applied']=turn['valid_dispatch'] and trace_matches and switch_confirmed
     turn['routing_passed']=turn['classification_passed'] and turn['profile_applied']
 
@@ -219,7 +220,16 @@ def run_job(job, tasks, cwd, env, timeout, budget, fixture=None, progress=None):
     row={**job,'turns':[]}; session=None; previous_cost=0
     try:
         session=ClaudeSession(job,cwd,env,timeout,budget,fixture,progress)
-        session.send('/route off' if job['phase']=='matrix' else '/route auto')
+        session.send('/route off' if job['phase']=='matrix' else '/route advise')
+        if job['phase']=='router':
+            session.send('Reply READY. Initialize the host for the next independent benchmark task.')
+            session.send('/route new')
+            session.send('/route check '+job['prompts'][0])
+            advice=session.command_json('/route trace')
+            row['advice']=advice
+            record=advice.get('recommendation')
+            if record and record.get('acceptance')=='suggested':
+                session.send('/route accept '+record['id'])
         for index,prompt in enumerate(job['prompts']):
             if progress: progress(f"  Answer {index+1}/{len(job['prompts'])}: waiting for {job['family']}/{job['effort']} (timeout {timeout:g}s)")
             turn=session.send(prompt)
@@ -237,7 +247,7 @@ def run_job(job, tasks, cwd, env, timeout, budget, fixture=None, progress=None):
                 trace=session.command_json('/route trace');turn['routing_trace']=trace
                 if job['phase']=='continuity':
                     turn['valid_dispatch']=valid_dispatch(turn,job['model'],job['effort'])
-                    turn['continuity_passed']=turn['valid_dispatch'] and trace.get('classifierCalls')==0 and trace.get('dispatchAttempts')==0 and trace.get('trace',{}).get('planMode') is True
+                    turn['continuity_passed']=turn['valid_dispatch'] and trace.get('classifierCalls')==0 and trace.get('counters',{}).get('dispatched',trace.get('dispatchAttempts'))==0 and trace.get('trace',{}).get('planMode') is True
                     if index==len(job['prompts'])-1:turn['recalls_codename']='CEDAR-17' in turn['result']
                 else:
                     score_routing(turn,tasks[job['task']],trace)
@@ -263,7 +273,7 @@ def make_offline_fixture(directory,tasks):
 export function register(on) { on('http.fetch', ($, e) => {
  if(e.url !== 'https://api.typesafe.ai/v1/systemone' || e.init.headers.Authorization !== 'Bearer offline-fixture') throw new Error('Unexpected fixture request');
  const kind=labels[JSON.parse(e.init.body).state.prompt]; if(!kind) throw new Error('Unknown synthetic prompt');
- return {value:{ok:true,status:200,headers:{},text:JSON.stringify({answers:{complexity:{type:'choice',choice:kind,confidence:1,probabilities:{simple:0,routine:0,complex:0,unknown:0,[kind]:1}},independence:{type:'choice',choice:'independent',confidence:1,probabilities:{independent:1,dependent:0}}},usage:{input_tokens:20,output_tokens:10}})}};
+ return {value:{ok:true,status:200,headers:{},text:JSON.stringify({answers:{requirements:{type:'choice',choice:'sufficient',confidence:1,probabilities:{sufficient:1,uncertain:0}},complexity:{type:'choice',choice:kind,confidence:1,probabilities:{simple:0,routine:0,complex:0,unknown:0,[kind]:1}},independence:{type:'choice',choice:'independent',confidence:1,probabilities:{independent:1,dependent:0}}},usage:{input_tokens:20,output_tokens:10}})}};
 }) }
 ''')
     return path
@@ -328,7 +338,7 @@ def report(data,path):
     abstentions=sum(t.get('routing_trace',{}).get('trace',{}).get('provider',{}).get('status')=='abstained' for t in router_turns)
     lines += ['', '## Routing and continuity', '',
         f"Jev accepted expected classifications: {sum(t.get('classification_passed',t.get('routing_passed',False)) for t in router_turns)}/{len(router_turns)}; provider abstentions: {abstentions}.",
-        f"Classification and expected profile application both passed: {sum(t.get('routing_passed',False) for t in router_turns)}/{len(router_turns)}. Default profiles are Haiku/low, Sonnet/medium and Opus/high.",
+        f"Legacy six-case expected advice/profile check passed: {sum(t.get('routing_passed',False) for t in router_turns)}/{len(router_turns)}. Default profiles are Haiku/low, Sonnet/medium and Opus/high.",
         f"Router answer semantics: {sum(answer_metrics(t)[0] for t in router_turns)}/{len(router_turns)}; strict JSON-only format: {sum(answer_metrics(t)[1] for t in router_turns)}/{len(router_turns)}.",
         f"Opus planning + codename recall: {sum(r['passed'] for r in planning)}/{len(planning)} effort levels passed.", '',
         '| Planning effort | Protected turns | Total wall seconds | Claude USD |', '|---|---:|---:|---:|']
@@ -336,7 +346,7 @@ def report(data,path):
         cost=reported_spend([row]);cost_text=f'{cost:.6f}' if cost is not None else 'unreported'
         lines.append(f"| {row['effort']} | {sum(t.get('continuity_passed',False) for t in row['turns'])}/{len(row['turns'])} | {sum(t['wall_ms'] for t in row['turns'])/1000:.1f} | {cost_text} |")
     lines += ['',f"Total reported Claude cost: ${spend:.6f}." if spend is not None else 'Total reported Claude cost is incomplete.',
-        'Costs include reported Claude usage only. TypeSafe monetary cost is not included; classifier token reports appear in routing traces. Fresh CLI sessions share identical prompts but provider cache reuse can still occur; cache token categories are retained. A single repetition is exploratory, not a statistically reliable ranking. No router policy is changed automatically.']
+        'Costs include reported Claude usage only. TypeSafe monetary cost is not included; classifier token reports appear in routing traces. Fresh CLI sessions share identical prompts but provider cache reuse can still occur; cache token categories are retained. A single repetition is exploratory, not a statistically reliable ranking. In 0.6 the harness explicitly accepts each displayed suggestion; users are never opted into automatic changes. Router-section costs include the host initialization answer. No policy is changed automatically.']
     if not data['offline']:
         expected=data['task_count']*data['repeats']
         eligible=[c for c in cells if c['attempted']==expected and c['valid']==expected and c['full_passes']==expected and c['cost_usd'] is not None]

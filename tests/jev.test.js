@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as api from '../src/jev.js';
 const fixture = () => ({ answers: {
+  requirements: {type:'choice',choice:'sufficient',confidence:1,probabilities:{sufficient:1,uncertain:0}},
   complexity: { type: 'choice', choice: 'routine', confidence: 0.98, probabilities: { simple: 0.005, routine: 0.98, complex: 0.01, unknown: 0.005 } },
   independence: { type: 'choice', choice: 'independent', confidence: 0.98, probabilities: { independent: 0.99, dependent: 0.01 } }
 }});
@@ -9,7 +10,7 @@ test('Jev request asks atomic complexity and independence questions', () => {
   assert.equal(typeof api.jevRequest, 'function');
   const r = api.jevRequest('Add a tooltip', 'jev-latest');
   assert.equal(r.model, 'jev-latest'); assert.equal(r.state.prompt, 'Add a tooltip');
-  assert.deepEqual(Object.keys(r.questions), ['complexity', 'independence']);
+  assert.deepEqual(Object.keys(r.questions), ['complexity', 'independence', 'requirements']);
 });
 test('Jev rubric separates supplied context and mechanical work from difficult open-ended reasoning', () => {
   const r = api.jevRequest('Return only JSON for this self-contained task.');
@@ -18,7 +19,7 @@ test('Jev rubric separates supplied context and mechanical work from difficult o
   assert.match(r.questions.complexity.instructions, /not the number of sentences/);
   assert.match(r.questions.independence.criteria.independent, /code supplied/);
   assert.match(r.questions.independence.instructions, /output format/);
-  assert.equal(api.JEV_QUESTION_VERSION, 2);
+  assert.equal(api.JEV_QUESTION_VERSION, 3);
 });
 test('Jev typed choices map to the conservative routing contract', () => {
   assert.equal(typeof api.parseJev, 'function');
@@ -86,3 +87,5 @@ test('Jev policy requires both concentration confidence and selected probability
   r.answers.complexity.probabilities.routine = 0.7;
   assert.deepEqual(api.evaluateJev(r).reasons, ['complexity:invalid-probabilities']);
 });
+
+test('uncertain correctness or required format vetoes advice',()=>{const r=fixture();r.answers.requirements={type:'choice',choice:'uncertain',confidence:1,probabilities:{sufficient:0,uncertain:1}};assert.equal(api.evaluateJev(r).status,'abstained')});

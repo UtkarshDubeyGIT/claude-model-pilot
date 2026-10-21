@@ -1,6 +1,6 @@
 # Install and use Model Pilot
 
-Use a current Claude Code CLI; **2.1.303** is the tested version. Native mods require **2.1.287 or later**, but older host versions have not been validated for this project. Check with `claude --version`. The runtime needs no npm install, build step or separate proxy. See [Claude's mod guide](https://code.claude.com/docs/en/plugins/mods/create).
+Use a current Claude Code CLI; **2.1.306** is the tested version. Native mods require **2.1.287 or later**, but older host versions have not been validated for this project. Check with `claude --version`. The runtime needs no npm install, build step or separate proxy. See [Claude's mod guide](https://code.claude.com/docs/en/plugins/mods/create).
 
 ## Install from GitHub
 
@@ -56,17 +56,15 @@ Inside Claude Code:
 /route profiles
 ```
 
-Expect advisory mode and the Jev classifier. Submit a harmless standalone prompt such as `What does HTTP stand for?`, then inspect `/route status` and `/route trace`. In advisory mode, the outgoing model remains your selected model; the trace distinguishes the provider result and the recommendation. This is a live provider call and can incur charges.
+Advice is enabled and Jev is the provider. **Eligible unfinished drafts go to TypeSafe after two seconds without editing**, whether or not you submit them. The mod stores no persistent drafts. Calls are separately billed. Use `/route off` to stop new assessment.
 
-To apply future recommendations:
+Type a harmless standalone draft. When eligible and supported by confident evidence, a card offers **Use for this task / Dismiss**. Sending without acceptance keeps your current profile. Silence can mean the current profile fits, continuity protects it, or evidence is unavailable. Inspect `/route trace` for the distinction.
 
-```text
-/route auto
-```
+The host must expose permission state first. Some hosts expose it only after the first answer. The mod stays quiet while it is unknown; after finishing that task, `/route new` starts a new independent task. Headless clients can explicitly assess with `/route check <prompt>`, accept the returned ID with `/route accept <id>`, then send the exact prompt. Do not issue `/route new` in the middle of work merely to force a suggestion.
 
-Do that in a fresh, non-planning session with approved model access. Missing keys, uncertainty, failures or continuity protections can legitimately keep the model unchanged. A routed model is only marked confirmed when the response reports that model. Requested effort is shown separately; effective reasoning effort is not independently exposed.
+Accepted profiles are applied at dispatch, then retained for task follow-ups only after API model confirmation. Effort is the requested effort; provider-internal effort is not independently observable. Editing the draft or changing model, effort, mode or task boundary invalidates unconsumed acceptance. `/route auto` only explains this migration.
 
-For planning, select Opus and the effort you want with Claude Code's model controls, then enter plan mode. Model Pilot preserves both through follow-ups and simple asides. A manual model change also pins routing; `/route unpin` releases that pin but does not disable planning protection. `/route new` marks a new task and retains any pin.
+Select Opus and your preferred effort before starting a plan. Planning, related implementation, short follow-ups, simple asides and returning to the plan remain protected. Leaving plan mode does not clear continuity. `/route new` cannot override plan mode or pins. Reloading loses volatile acceptance; resumed sessions protect the host's selected profile.
 
 ## Update, disable or remove
 
@@ -103,7 +101,7 @@ This loads the local checkout for that session. Use the correct path when starti
 | `missing-key` | Export the key before launching Claude from the same shell. Never print the value to debug it. |
 | HTTP error | Check the key, provider access and organization network policy. Share only the status code. |
 | Timeout or abstention | Claude keeps your selection. Inspect the provider state in `/route trace`; a failed call is not a model recommendation. |
-| Advice appears but no model switch | Advisory is the default. Enable `/route auto` if desired; check pins, plan mode and continuity. |
+| Advice appears but no model switch | Accept the specific suggestion before sending; check stale drafts, pins, plan mode and continuity. No automatic mode exists. |
 | “Planning is protected” outside plan mode | The mod may not be receiving permission-mode lifecycle events. Check host errors and managed policy; do not remove the protection to force routing. |
 | Correct target requested but API model differs | The host/provider may have applied a fallback. The trace reports a mismatch; do not count it as successful routing. |
 | Custom gateway stays on selected model | Supply explicit deployment mappings for enabled target families and validate model access. |
@@ -117,6 +115,6 @@ Review the mod's source, external TypeSafe data flow and allowed target models b
 
 Claude distinguishes organization-owned mods from user mods. Merely enabling this GitHub marketplace through managed settings does not give it organization-owned status. Under current documented rules, that requires managed `enabledPlugins`, an administrator-controlled local directory marketplace named by absolute path, and a relative plugin source loaded in place. Settings such as `allowManagedModsOnly` can reject user mods, including `--plugin-dir` copies. Follow the [official managed-mod deployment guide](https://code.claude.com/docs/en/plugins/mods/admin) rather than weakening policy.
 
-Model Pilot observes `classic.SessionStart` and `classic.UserPromptSubmit` for permission mode. Host versions and managed policies can restrict lifecycle hooks. Confirm that these events reach the installed mod in your environment. Missing mode keeps routing protected. This fallback is intentional; user installation alone is not proof of enterprise compatibility.
+Model Pilot observes `classic.SessionStart` and `classic.UserPromptSubmit` for permission mode, with additional conservative plan indicators. The current host has no general pre-draft permission getter. Host versions and managed policies can restrict lifecycle hooks. Confirm that these events reach the installed mod in your environment. Missing mode keeps routing protected. This fallback is intentional; user installation alone is not proof of enterprise compatibility.
 
 For gateways, Bedrock, Vertex and Foundry, configure explicit target deployment IDs using the applicable `ANTHROPIC_DEFAULT_HAIKU_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL` and `ANTHROPIC_DEFAULT_OPUS_MODEL` variables. Validate each target and effort with your deployment. Unknown starting families remain unchanged; the mod cannot guarantee model availability or override host effort caps.

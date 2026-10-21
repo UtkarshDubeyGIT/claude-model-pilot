@@ -1,3 +1,33 @@
+# Advisor evaluation in 0.6
+
+Use `benchmarks/advice.json`: 48 labeled scenarios, 24 calibration and 24 held-out, with six categories and sets of acceptable profiles. Labels include whether advice should appear. These are authored expectations, not measured model capabilities.
+
+```sh
+# No network: validates labels against policy, not Jev accuracy
+python3 scripts/evaluate-advice.py --policy-replay --split all
+
+# Explicit paid classifier calibration
+python3 scripts/evaluate-advice.py --live --split calibration
+
+# Explicit paid paired baseline/candidate answers, soft Claude budget
+python3 scripts/evaluate-advice.py --live --split calibration --answers --budget-usd 5
+
+# After fixing policy using calibration only, measure generalization
+python3 scripts/evaluate-advice.py --live --split heldout --answers --budget-usd 5
+```
+
+No paid calls run without `--live`. `--answers` buys separate current-profile and suggested-profile answer sessions only when advice appears. It records requested model/effort, API identity, correctness, functionality, format, depth/polish, cost and latency. It does not silently accept free-form answers as correct: code execution, safety and open-ended reasoning require human review. For supplied JSON gold, semantic and format scores are independent. Compare only valid dispatches and completed pairs. A missing candidate, unknown cost or human-review field is not a pass.
+
+The budget is a soft stop on reported Claude cost, excludes TypeSafe money, and may be exceeded by one in-flight request. Classifier-only runs are bounded by the selected scenario count, not a monetary TypeSafe cap. Keep credentials in the launching shell. Raw benchmark answers remain in ignored `evals/`; publish only reviewed, sanitized evidence.
+
+Primary outcomes are useful advice, justified silence, missed advice, unnecessary advice and advice outside the acceptable-profile set. Provider confidence and abstention remain separate diagnostics. Lower thresholds require calibration evidence, not a desire for more switches. The new mandatory-quality question has not yet been validated live in this release.
+
+The six-case legacy matrix remains useful for historical comparisons. In 0.6 its router section explicitly checks and accepts recommendations; no automatic mode is enabled. Its headless host initialization answer adds cost to those sessions. The continuity section never accepts a change. Do not interpret its legacy combined pass count as general recommendation quality.
+
+---
+
+## Historical matrix guide (0.4–0.5 methodology)
+
 # Current-tier model and effort benchmark
 
 Documentation checked on 22 October 2026. This benchmark covers the current general-purpose Claude lineup, not every historical version or restricted specialized model.

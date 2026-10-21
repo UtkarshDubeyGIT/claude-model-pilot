@@ -1,3 +1,15 @@
+# 0.6 research update
+
+Current interactive validation uses Claude Code 2.1.306; generated native declarations were also inspected. `AbovePrompt`, `Box`, `Text` and `Button` supply the supported composer interface. `prompt.edit`/`prompt.change` observe drafts; `clock.after` schedules work without blocking typing. [Mod interface](https://code.claude.com/docs/en/plugins/mods/interface)
+
+The host has no general effective-effort/permission getter in the inspected API. Live config rows and observed outgoing requests can establish effort; unknown effort suppresses effort-only advice. Lifecycle events establish permission, which can be unavailable before the first answer. Plan indicators add protection and never grant permission. The host lifecycle and API request are checked again before an accepted change.
+
+The current model documentation separates model selection, reasoning effort and provider mappings. `/model` can save defaults; this mod therefore applies accepted profiles at request dispatch instead. [Model configuration](https://code.claude.com/docs/en/model-config)
+
+The prior research below is historical; optional auto/Haiku routing described there was removed in 0.6.
+
+---
+
 # Research notes
 
 Reviewed 21 October 2026. Local development and validation target: Claude Code **2.1.303**. This is an early implementation, not evidence of production reliability or measured savings.

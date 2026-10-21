@@ -1,3 +1,36 @@
+# Validation record — 0.6.0 experimental
+
+22 October 2026, Claude Code **2.1.306**. Synthetic fixtures use an isolated temporary configuration, a loopback model API and dummy credentials; no paid inference was used for this release validation.
+
+| Check | Result | What it establishes |
+| --- | --- | --- |
+| Portable Node tests | 85 passed | Policy, consent ledger, provider validation, 48 labeled scenario replays |
+| Native mod tests | 40 passed | Draft timers, races, explicit consent, buttons, overrides, mappings, tool loops and continuity |
+| Python tests | 31 passed | Independent correctness/format grading, evaluation integrity and budgets |
+| Strict plugin validation | Passed | Supported hook/capability syntax and manifests |
+| Real-host synthetic integration | 4 scenarios / 7 answer turns passed, plus 3 initialization answers | Explicitly accepted Haiku/low, Sonnet/medium and Opus/high; four protected Opus planning turns |
+| Real-host synthetic continuity | 5 sessions / 20 turns passed | Opus low, medium, high, xhigh and max retained exactly |
+| Interactive terminal composer | Verified with synthetic provider/model responses | Idle suggestion, button acceptance, request application and follow-up retention |
+
+Native tests additionally cover the full plan → follow-up → aside → implementation → return chain at every effort, resumed-session protection, stale responses, changed drafts, API mismatches, unknown permission state, attachments and queues. No automatic routing mode exists.
+
+The interactive check found and fixed a real-host ordering difference: the composer emits a clear immediately before submission. Consent can transfer during that same dispatch cycle; a standalone clear expires on the next timer tick, while edits invalidate immediately. Both event orders and standalone clear have regression tests. The tested UI sent Haiku/low only after acceptance, displayed the confirmed active task profile, and retained Haiku/low for “Continue.” The host can make its own background model calls; the mod's counters and main-request trace are the application evidence.
+
+The 48-case **synthetic policy replay** produced 20 useful-advice outcomes and 28 justified silences under authored, high-confidence labels. That checks policy behavior, not live Jev accuracy or calibration. The 24/24 split is fixed; live held-out results have not been collected. No new savings or general model-quality claim is made.
+
+## Limits
+
+- Jev question version 3's mandatory-quality check has not yet been live-calibrated. Run the explicit paid calibration command before relying on recommendation accuracy in an enterprise workload.
+- The native API can withhold permission state until the first answer. Unknown state stays protected. After a completed task, `/route new` enables assessment only when other protections allow it.
+- Effective provider-internal effort is not independently reported. The trace verifies requested effort and API-reported model identity.
+- Volatile acceptance/profile state does not survive reload. Resumed sessions protect the host-selected profile.
+- Desktop buttons were tested through the native surface harness; actual terminal composition was tested interactively. Other clients and enterprise-managed deployments need their own checks.
+- Strict validation reports an optional missing directory-listing icon; that does not block GitHub marketplace installation. GitHub publication is not Anthropic directory approval.
+
+Sanitized aggregates and source hashes: [0.6 validation evidence](../benchmarks/results/2026-10-22-advisor-0.6.0.json). Raw synthetic logs remain local and ignored. Previous live evidence below applies to 0.5, not the new rubric.
+
+---
+
 # Validation record — 0.5.0
 
 22 October 2026, Claude Code 2.1.303. This is an experimental release.

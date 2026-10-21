@@ -73,7 +73,7 @@ def assess(row, offline=False):
         if scenario == 'planning':
             checks.update({'planning-protection': trace.get('planMode') is True,
                            'no-classifier': turn.get('trace', {}).get('classifierCalls') == 0,
-                           'no-switch': turn.get('trace', {}).get('dispatchAttempts') == 0})
+                           'no-switch': turn.get('trace', {}).get('counters',{}).get('dispatched',turn.get('trace', {}).get('dispatchAttempts')) == 0})
         else:
             checks.update({'jev-called': turn.get('trace', {}).get('classifierCalls') == 1,
                            'jev-kind': provider.get('classification', {}).get('kind') == scenario,
@@ -121,7 +121,16 @@ def run_case(case, cwd, env, offline):
         raise TimeoutError('Turn deadline')
     row = {'scenario': name, 'initial_model': model, 'initial_effort': effort, 'permission_mode': permission, 'turns': []}
     try:
-        row['setup'] = send('/route auto')
+        row['setup'] = send('/route advise')
+        if name != 'planning':
+            row['host_initialization'] = send('Reply READY. This initializes the host lifecycle for the following independent test task.')
+            send('/route new')
+            send('/route check '+prompts[0])
+            advice = parse_trace(send('/route trace')['result'])
+            record = advice.get('recommendation')
+            row['advice'] = advice
+            if record and record['acceptance'] == 'suggested':
+                send('/route accept '+record['id'])
         for prompt in prompts:
             before = len(MockAPI.requests)
             answer = send(prompt)

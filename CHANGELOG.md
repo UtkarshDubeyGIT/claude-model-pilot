@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 experimental — 2026-10-22
+
+- Replace optional automatic routing with pre-send advice and draft/task-bound explicit acceptance. Add composer buttons and accept/dismiss/check commands.
+- Debounce drafts for two seconds, enforce a ten-second background call interval and one physical request in flight, and cache assessments only in session memory.
+- Protect planning, related implementation, asides and resumed sessions before assessment. Preserve confirmed accepted profiles through tool loops and follow-ups.
+- Add candidate mandatory-quality assessment while retaining both 0.95 gates. Support known same-model effort changes; separate component versions and schema-2 counters.
+- Add 48 labeled calibration/held-out scenarios, a paired-answer evaluator, acceptance/race tests, and migrated real-host synthetic tests. No new live-quality or savings claim.
+- Disclose unfinished-draft processing, document host permission/effort limitations, and update installation, agent prompt and rollback instructions.
+
 ## 0.5.0 — 2026-10-22
 
 - Add public marketplace installation instructions, secure shell setup, troubleshooting, contributor guidance and a copy-paste agent setup prompt.

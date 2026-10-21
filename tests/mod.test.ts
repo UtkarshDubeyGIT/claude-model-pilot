@@ -1,467 +1,211 @@
 import { expect, test, mock } from 'claude-code/testing'
-
+const TEXT = 'What does HTTP stand for?'
 function host(on, options = {}) {
   const seen = []
   on('command.run', () => ({ text: 'unhandled' }))
   on('command.register', () => ({ value: undefined }))
   on('session.model', () => ({ value: options.model ?? 'claude-opus-5-5' }))
   on('session.turns', () => ({ value: options.turns ?? 0 }))
-  on('session.usage', () => ({ value: { context: { tokens: options.unmeasured ? undefined : 0, window: 200000 }, rateLimits: [], startedAt: 0 } }))
+  on('session.usage', () => ({ value: { context: { tokens: 0, window: 200000 }, rateLimits: [], startedAt: 0 } }))
+  on('config.list', () => ({value: options.unknownEffort ? [] : [{key:'effortLevel',kind:'choice',label:'Effort',value:options.effort ?? 'high',provider:{kind:'engine'},isLocked:false}]}))
   on('session.start', () => ({ cwd: '/work' }))
   on('turn.start', ($, e) => ({ turnId: e.turnId }))
+  on('turn.complete', () => ({text:'ok'}))
+  on('classic.SessionStart', () => ({}))
   on('classic.UserPromptSubmit', () => ({}))
   on('classic.PostModelSwitch', () => ({}))
-  on('ui.status', () => ({ value: undefined }))
-  on('ui.log', () => ({ value: undefined }))
-  on('ui.invalidate', () => ({ value: undefined }))
+  on('prompt.edit', ($, e) => ({text:e.inputText,cursor:e.inputText.length}))
+  on('prompt.change', ($,e) => ({text:e.text,cursor:e.cursor}))
+  on('prompt.submit', ($,e) => ({text:e.text}))
+  on('ui.render', () => ({type:'Text',props:{},children:['Other mod']}))
+  on('ui.invalidate', () => ({value:undefined}))
   on('turn.step', async function* ($, e) {
-    seen.push(e)
-    yield { kind: 'text', index: 0, text: 'ok' }
-    return { turnId: e.turnId, index: e.index, answer: 'ok', toolUses: [], stopReason: 'end_turn', usage: options.usage ?? { model: e.model } }
+    seen.push(e); yield {kind:'text',index:0,text:'ok'}
+    return {turnId:e.turnId,index:e.index,answer:'ok',toolUses:[],stopReason:'end_turn',usage:options.usage ?? {model:e.model}}
   })
   return seen
 }
-async function start($, text = 'What does HTTP stand for?', id = 't', mode = 'default') {
-  await $.classic.UserPromptSubmit({ hook_event_name: 'UserPromptSubmit', session_id: 's', transcript_path: '', cwd: '/work', permission_mode: mode, prompt: text })
-  await $.turn.start({ text, turnId: id })
-}
-async function step($, id = 't', index = 0, extra = {}) {
-  const stream = $.turn.step({ turnId: id, index, model: 'claude-opus-5-5', effort: 'high', messageCount: 1, ...extra })
-  let s = await stream.next(); while (!s.done) s = await stream.next()
-  return s.value
-}
-test('route command explains advisory defaults', async ($, on) => {
-  mock.env(on, {})
-  host(on)
-  const r = await $.command.run({ command: 'route', args: '' })
-  expect(r.text).toContain('advise')
-})
-test('profiles lists the active profile policy and resolved deployment IDs without enabling routing', async ($, on) => {
-  host(on)
-  mock.env(on, { ANTHROPIC_BASE_URL: 'https://example.invalid', ANTHROPIC_DEFAULT_HAIKU_MODEL: 'tenant-small' })
-  const r = JSON.parse((await $.command.run({ command: 'route', args: 'profiles' })).text)
-  expect(r.schemaVersion).toBe(1)
-  expect(r.profileVersion).toBe(1)
-  expect(r.profiles.simple).toEqual({ model: 'haiku', effort: 'low' })
-  expect(r.profiles.routine).toEqual({ model: 'sonnet', effort: 'medium' })
-  expect(r.profiles.complex).toEqual({ model: 'opus', effort: 'high' })
-  expect(r.modelIds.haiku).toBe('tenant-small')
-  expect(r.modelIds.sonnet).toBe(null)
-  expect((await $.command.run({ command: 'route', args: 'status' })).text).toContain('advise')
-})
-test('advisory mode leaves the request untouched', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-  expect(seen[0].effort).toBe('high')
-})
-test('explicit auto routes all steps of a simple turn consistently', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await $.command.run({ command: 'route', args: 'classifier off' })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($); await step($, 't', 1)
-  expect(seen.map(x => x.model)).toEqual(['claude-haiku-5-5', 'claude-haiku-5-5'])
-  expect(seen[0].effort).toBe('low')
-})
-test('plan mode protects the selected model even with auto enabled', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($, undefined, 't', 'plan'); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('subagents and unrelated turn IDs are untouched', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await $.command.run({ command: 'route', args: 'auto' }); await start($)
-  await step($, 't', 0, { agentId: 'agent' }); await step($, 'other')
-  expect(seen.map(x => x.model)).toEqual(['claude-opus-5-5', 'claude-opus-5-5'])
-})
-test('manual model selection pins and cancels pending routing', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await $.command.run({ command: 'route', args: 'auto' }); await start($)
-  await $.classic.PostModelSwitch({ hook_event_name: 'PostModelSwitch', session_id: 's', transcript_path: '', cwd: '/work', from_model: 'opus', to_model: 'opus', requested_model: 'opus', source: 'picker', context_tokens: 0, prompt_cache_warm: false, cache_ttl: '5m', estimated_cache_write_usd: 0, pricing: 'catalog' })
-  await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('classifier failure passes the original request through', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  on('model.complete', () => ({ value: { isAnswered: false, reason: 'api-error' } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier haiku' })
-  await start($, 'Add a tooltip to the save button'); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('an enabled optional classifier cannot silently fall back to simple keywords', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, {})
-  on('model.complete', () => ({ value: { isAnswered: false, reason: 'api-error' } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier haiku' })
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-  expect(seen[0].effort).toBe('high')
-})
-
-test('classifier success routes a routine task and retains it for follow-up', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  on('model.complete', () => ({ value: { isAnswered: true, text: '{"kind":"routine","independent":true,"confidence":0.98}', usage: { input_tokens: 30, output_tokens: 15 } } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier haiku' })
-  await start($, 'Add a tooltip to the save button'); await step($)
-  await start($, 'Add tests for it', 't2'); await step($, 't2')
-  expect(seen.map(x => x.model)).toEqual(['claude-sonnet-5-5', 'claude-sonnet-5-5'])
-})
-test('unknown permission mode never routes', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.turn.start({ text: 'What does HTTP stand for?', turnId: 't' }); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('host fallback on first step is respected', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($, 't', 0, { model: 'claude-sonnet-5-5' })
-  expect(seen[0].model).toBe('claude-sonnet-5-5')
-})
-test('attachments prevent automatic downgrade', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  on('prompt.submit', ($, e) => ({ text: e.text }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.prompt.submit({ text: 'What does HTTP stand for?', attachments: [{ type: 'image', source: 'image' }] })
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('session start registers route and protects a resumed task', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on, { turns: 9 })
-  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
-  const r = await $.command.run({ command: 'route', args: '' })
-  expect(r.text).toContain('ongoing task protected')
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('draft edits provide advice without modifying text or calling a model', async ($, on) => {
-  mock.env(on, {})
-  host(on)
-  on('prompt.edit', ($, e) => ({ text: e.text.slice(0, e.start) + e.inputText + e.text.slice(e.end), cursor: e.start + e.inputText.length }))
-  const r = await $.prompt.edit({ origin: { kind: 'composer' }, text: 'What does ', cursor: 10, start: 10, end: 10, inputText: 'HTTP stand for?' })
-  expect(r.text).toBe('What does HTTP stand for?')
-})
-test('routine follow-up retains its chosen reasoning effort', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  on('model.complete', () => ({ value: { isAnswered: true, text: '{"kind":"routine","independent":true,"confidence":0.98}' } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier haiku' })
-  await start($, 'Add a tooltip'); await step($)
-  await start($, 'Add tests', 't2'); await step($, 't2')
-  expect(seen.map(x => x.effort)).toEqual(['medium', 'medium'])
-})
-test('entering planning discards an old automatic work model', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  on('model.complete', () => ({ value: { isAnswered: true, text: '{"kind":"routine","independent":true,"confidence":0.98}' } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier haiku' })
-  await start($, 'Add a tooltip'); await step($)
-  await start($, 'Plan the next feature', 't2', 'plan'); await step($, 't2')
-  await start($, 'Implement it', 't3'); await step($, 't3')
-  expect(seen.map(x => x.model)).toEqual(['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-opus-5-5'])
-})
-test('observed usage includes input, output, cache reads and writes separately', async ($, on) => {
-  mock.env(on, {})
-  host(on, { usage: { input_tokens: 10, output_tokens: 20, cache_read_input_tokens: 30, cache_creation_input_tokens: 40, model: 'claude-opus-5-5' } })
-  await start($); await step($)
-  const r = await $.command.run({ command: 'route', args: 'status' })
-  expect(r.text).toContain('Observed main requests: input 10, output 20, cache read 30, cache write 40')
-})
-test('terminal advice composes with other mods in the prompt band', async ($, on) => {
-  mock.env(on, {})
-  host(on)
-  on('ui.render', () => ({ type: 'Text', props: {}, children: ['Other mod'] }))
-  on('prompt.edit', ($, e) => ({ text: e.inputText, cursor: e.inputText.length }))
-  await $.command.run({ command: 'route', args: 'classifier off' })
-  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
-  await $.classic.UserPromptSubmit({ hook_event_name: 'UserPromptSubmit', session_id: 's', transcript_path: '', cwd: '/work', permission_mode: 'default', prompt: '' })
-  await $.prompt.edit({ origin: { kind: 'composer' }, text: '', cursor: 0, start: 0, end: 0, inputText: 'What does HTTP stand for?' })
-  const ui = await $.ui.mount({ plugin: 'model-pilot', surface: 'terminal', component: 'AbovePrompt', props: {} })
-  expect(await ui.find({ type: 'Text', text: /Suggest haiku/ })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: /Other mod/ })).toBeDefined()
-  await ui.unmount()
-})
-test('a queued prompt remains protected after the preceding turn completes', async ($, on) => {
-  mock.env(on, {})
-  const seen = host(on)
-  on('prompt.submit', ($, e) => ({ text: e.text }))
-  on('turn.complete', () => ({ text: '' }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($, 'What does DNS stand for?', 'previous')
-  await $.prompt.submit({ text: 'What does HTTP stand for?', turnId: 'previous', wait: true })
-  await $.turn.complete({ turnId: 'previous', isAborted: false, answer: 'Domain Name System', durationMs: 1, usage: null })
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-
-test('Jev cannot be enabled without a key and never prints the key', async ($, on) => {
-  mock.env(on, {})
-  host(on)
-  const r = await $.command.run({ command: 'route', args: 'classifier jev' })
-  expect(r.text).toContain('TYPESAFE_API_KEY')
-  expect(r.text).toContain('not enabled')
-})
-test('Jev sends bearer authentication to TypeSafe and routes a typed answer', async ($, on) => {
-  const seen = host(on)
-  let request
-  on('env.get', ($, e) => ({ value: e.name === 'TYPESAFE_API_KEY' ? 'test-only-key' : undefined }))
-  mock.clock(on)
-  on('http.fetch', ($, e) => {
-    request = e
-    return { value: { ok: true, status: 200, headers: {}, text: JSON.stringify({ answers: {
-      complexity: { type: 'choice', choice: 'routine', confidence: 1, probabilities: { simple: 0, routine: 1, complex: 0, unknown: 0 } },
-      independence: { type: 'choice', choice: 'independent', confidence: 1, probabilities: { independent: 1, dependent: 0 } }
-    }, usage: { input_tokens: 40, output_tokens: 10 } }) } }
-  })
-  await $.command.run({ command: 'route', args: 'auto' })
-  const r = await $.command.run({ command: 'route', args: 'classifier jev' })
-  expect(r.text.includes('test-only-key')).toBe(false)
-  await start($, 'Add a tooltip'); await step($)
-  expect(request.url).toBe('https://api.typesafe.ai/v1/systemone')
-  expect(request.init.headers.Authorization).toBe('Bearer test-only-key')
-  expect(seen[0].model).toBe('claude-sonnet-5-5')
-})
-test('TypeSafe rejection preserves the original request without exposing response details', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, { TYPESAFE_API_KEY: 'test-only-key' })
-  mock.clock(on)
-  on('http.fetch', () => ({ value: { ok: false, status: 401, headers: {}, text: 'sensitive-provider-detail' } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier jev' })
-  await start($, 'Add a tooltip'); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-  const r = await $.command.run({ command: 'route', args: 'status' })
-  expect(r.text.includes('sensitive-provider-detail')).toBe(false)
-})
-test('Jev deadline continues on the original model and ignores a late answer', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, { TYPESAFE_API_KEY: 'test-only-key' })
-  const clock = mock.clock(on)
-  on('http.fetch', async () => {
-    await clock.sleep(5000)
-    return { value: { ok: true, status: 200, headers: {}, text: JSON.stringify({ answers: {
-      complexity: { type: 'choice', choice: 'routine', confidence: 1, probabilities: { simple: 0, routine: 1, complex: 0, unknown: 0 } },
-      independence: { type: 'choice', choice: 'independent', confidence: 1, probabilities: { independent: 1, dependent: 0 } }
-    } }) } }
-  })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'classifier jev' })
-  const starting = start($, 'Add a tooltip')
-  await clock.settle(); await clock.advance(1500); await starting
-  await step($); await clock.advance(3500); await step($, 't', 1)
-  expect(seen.map(e => e.model)).toEqual(['claude-opus-5-5', 'claude-opus-5-5'])
-})
-test('Jev is the default decision model even for a keyword-simple question', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, { TYPESAFE_API_KEY: 'test-only-key' })
-  mock.clock(on)
-  let calls = 0
-  on('http.fetch', () => {
-    calls += 1
-    return { value: { ok: true, status: 200, headers: {}, text: JSON.stringify({ answers: {
-      complexity: { type: 'choice', choice: 'routine', confidence: 1, probabilities: { simple: 0, routine: 1, complex: 0, unknown: 0 } },
-      independence: { type: 'choice', choice: 'independent', confidence: 1, probabilities: { independent: 1, dependent: 0 } }
-    } }) } }
-  })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  expect(calls).toBe(1)
-  expect(seen[0].model).toBe('claude-sonnet-5-5')
-})
-test('default Jev with no key preserves even a keyword-simple request', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, {})
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-})
-test('status records outgoing model and effort plus the model reported by the API', async ($, on) => {
-  host(on, { usage: { model: 'claude-opus-5-5', input_tokens: 1, output_tokens: 1 } })
-  await start($, 'Plan an authentication service', 't', 'plan'); await step($)
-  const r = await $.command.run({ command: 'route', args: 'status' })
-  expect(r.text).toContain('Last request: claude-opus-5-5 / high; API model: claude-opus-5-5')
-})
-
-function fakeJev(on, kind = 'simple') {
-  mock.env(on, { TYPESAFE_API_KEY: 'test-only-key' })
-  mock.clock(on)
-  let calls = 0
-  on('http.fetch', () => {
+function jev(on, kind='simple', options={}) {
+  mock.env(on, options.noKey ? {} : {TYPESAFE_API_KEY:'test-key',...options.env})
+  const clock=mock.clock(on);let calls=0
+  on('http.fetch', async()=>{
     calls++
-    return { value: { ok: true, status: 200, headers: {}, text: JSON.stringify({ answers: {
-      complexity: { type: 'choice', choice: kind, confidence: 1, probabilities: { simple: 0, routine: 0, complex: 0, unknown: 0, [kind]: 1 } },
-      independence: { type: 'choice', choice: 'independent', confidence: 1, probabilities: { independent: 1, dependent: 0 } }
-    } }) } }
-  })
-  return () => calls
+    if(options.delay) await clock.sleep(options.delay)
+    if(options.error) throw new Error('private-provider-error')
+    return {value:{ok:true,status:200,headers:{},text:JSON.stringify({answers:{
+      complexity:{type:'choice',choice:kind,confidence:options.confidence ?? 1,probabilities:{simple:0,routine:0,complex:0,unknown:0,[kind]:1}},
+      independence:{type:'choice',choice:'independent',confidence:1,probabilities:{independent:1,dependent:0}},
+      requirements:{type:'choice',choice:'sufficient',confidence:1,probabilities:{sufficient:1,uncertain:0}},
+    }})}}
+  });return {clock,calls:()=>calls}
 }
-test('fresh unmeasured session calls Jev and sends a concrete model ID', async ($, on) => {
-  const seen = host(on, { unmeasured: true })
-  const calls = fakeJev(on)
-  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  expect(calls()).toBe(1)
-  expect(seen[0].model).toBe('claude-haiku-5-5')
-  expect(seen[0].effort).toBe('low')
+const cmd=($,args)=>$.command.run({command:'route',args})
+const trace=async $=>JSON.parse((await cmd($,'trace')).text)
+async function boot($,mode='default'){
+ await $.session.start({surface:'terminal',isInteractive:true,cwd:'/work'})
+ await $.classic.SessionStart({hook_event_name:'SessionStart',session_id:'s',transcript_path:'',cwd:'/work',permission_mode:mode,source:'startup'})
+}
+async function start($,text=TEXT,id='t',mode='default'){
+ await $.classic.UserPromptSubmit({hook_event_name:'UserPromptSubmit',session_id:'s',transcript_path:'',cwd:'/work',permission_mode:mode,prompt:text})
+ await $.turn.start({text,turnId:id})
+}
+async function step($,id='t',index=0,extra={}){
+ const stream=$.turn.step({turnId:id,index,model:'claude-opus-5-5',effort:'high',messageCount:1,...extra})
+ let s=await stream.next();while(!s.done)s=await stream.next();return s.value
+}
+async function check($,text=TEXT){await cmd($,'check '+text);return (await trace($)).recommendation}
+async function accepted($,text=TEXT){const r=await check($,text);expect(r.acceptance).toBe('suggested');await cmd($,'accept '+r.id);return r}
+async function edit($,text){await $.prompt.edit({text:'',cursor:0,start:0,end:0,inputText:text,kind:'insert'})}
+
+test('auto migrates and never authorizes requests',async($,on)=>{
+ const seen=host(on);jev(on);await boot($);expect((await cmd($,'auto')).text).toContain('removed')
+ await check($);await start($);await step($);expect(seen[0].model).toBe('claude-opus-5-5');expect((await trace($)).counters.dispatched).toBe(0)
 })
-test('complex promotion sends a full model ID and high effort', async ($, on) => {
-  const seen = host(on, { model: 'claude-sonnet-5', unmeasured: true })
-  fakeJev(on, 'complex')
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($, 'Design a production migration')
-  await step($, 't', 0, { model: 'claude-sonnet-5', effort: 'medium' })
-  expect(seen[0].model).toBe('claude-opus-5-5')
-  expect(seen[0].effort).toBe('high')
+test('accepted draft applies throughout a tool loop and follow-ups',async($,on)=>{
+ const seen=host(on);jev(on);await boot($);await accepted($);await start($);await step($);await step($,'t',1)
+ await $.turn.complete({turnId:'t',answer:'ok'});await start($,'Continue','u');await step($,'u')
+ expect(seen.map(x=>x.model)).toEqual(['claude-haiku-5-5','claude-haiku-5-5','claude-haiku-5-5'])
+ expect(seen.every(x=>x.effort==='low')).toBe(true)
+ const t=await trace($);expect(t.schemaVersion).toBe(2);expect(t.counters.accepted).toBe(1);expect(t.counters.confirmed).toBe(2)
 })
-test('an API model mismatch must not count as a confirmed switch', async ($, on) => {
-  host(on, { usage: { model: 'claude-opus-5-5' } })
-  fakeJev(on)
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  const r = await $.command.run({ command: 'route', args: 'status' })
-  expect(r.text).toContain('Confirmed routed turns: 0')
-  expect(r.text).toContain('model-mismatch')
+test('changed draft invalidates consent',async($,on)=>{
+ const seen=host(on);jev(on);await boot($);await accepted($);await edit($,'different');await start($);await step($)
+ expect(seen[0].model).toBe('claude-opus-5-5')
 })
-test('Opus plan, follow-ups and simple aside never call Jev', async ($, on) => {
-  const seen = host(on, { unmeasured: true })
-  const calls = fakeJev(on)
-  await $.command.run({ command: 'route', args: 'auto' })
-  for (const [index, text] of ['Plan an authentication service', 'Continue', 'What does HTTP stand for?', 'Implement it'].entries()) {
-    await start($, text, 'p' + index, index < 3 ? 'plan' : 'default')
-    await step($, 'p' + index)
+test('dismissed recommendation cannot be accepted or repeated from cache',async($,on)=>{
+ host(on);const f=jev(on);await boot($);const r=await check($);await cmd($,'dismiss '+r.id);await cmd($,'accept '+r.id);await check($)
+ expect((await trace($)).recommendation.acceptance).toBe('dismissed');expect(f.calls()).toBe(1)
+})
+test('draft evaluation debounces for two seconds and reuses session cache',async($,on)=>{
+ host(on);const f=jev(on);await boot($);await edit($,'draft');await f.clock.advance(1000);await edit($,TEXT);await f.clock.advance(1999)
+ expect(f.calls()).toBe(0);await f.clock.advance(1);await f.clock.settle();expect(f.calls()).toBe(1)
+ await edit($,'x');await edit($,TEXT);await f.clock.advance(2000);await f.clock.settle();expect(f.calls()).toBe(1)
+})
+test('background calls have a ten second minimum interval',async($,on)=>{
+ host(on);const f=jev(on);await boot($);await edit($,TEXT);await f.clock.advance(2000);await f.clock.settle()
+ await edit($,'Define DNS');await f.clock.advance(9999);await f.clock.settle();expect(f.calls()).toBe(1)
+ await f.clock.advance(1);await f.clock.settle();expect(f.calls()).toBe(2)
+})
+test('slow responses neither block submission nor affect its request',async($,on)=>{
+ const seen=host(on);const f=jev(on,'simple',{delay:5000});await boot($);await edit($,TEXT);await f.clock.advance(2000)
+ await start($);await step($);await f.clock.advance(5000);await f.clock.settle()
+ expect(seen[0].model).toBe('claude-opus-5-5');expect((await trace($)).counters.suggested).toBe(0)
+})
+for(const [name,extra] of [['missing key',{noKey:true}],['provider failure',{error:true}],['abstention',{confidence:0.8}]]){
+ test(name+' stays quiet without claiming optimality',async($,on)=>{
+  const seen=host(on);jev(on,'simple',extra);await boot($);await check($);await start($);await step($)
+  expect(seen[0].model).toBe('claude-opus-5-5');expect((await trace($)).counters.suggested).toBe(0)
+ })
+}
+test('planning chain including aside and implementation is protected at every effort',async($,on)=>{
+ const seen=host(on);const f=jev(on);await boot($,'plan')
+ for(const effort of ['low','medium','high','xhigh','max']){
+  for(const [i,text] of ['Plan service','Continue','Unrelated question: define HTTP','Implement it','Return to plan'].entries()){
+   await check($,text);await start($,text,effort+i,i===0?'plan':'default');await step($,effort+i,0,{effort})
   }
-  expect(calls()).toBe(0)
-  expect(seen.every(e => e.model === 'claude-opus-5-5' && e.effort === 'high')).toBe(true)
+ }
+ expect(f.calls()).toBe(0);expect(seen.every(x=>x.model==='claude-opus-5-5')).toBe(true);expect((await trace($)).counters.dispatched).toBe(0)
 })
-test('a gateway model target uses the explicit deployment mapping', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, { ANTHROPIC_BASE_URL: 'https://example.invalid', ANTHROPIC_DEFAULT_HAIKU_MODEL: 'tenant-small' })
-  await $.command.run({ command: 'route', args: 'classifier off' })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  expect(seen[0].model).toBe('tenant-small')
-  const trace = JSON.parse((await $.command.run({ command: 'route', args: 'trace' })).text)
-  expect(trace.trace.application).toBe('confirmed-model')
+test('resumed sessions remain protected before classification',async($,on)=>{
+ host(on,{turns:8});const f=jev(on);await boot($);await check($);expect(f.calls()).toBe(0)
 })
-test('an unmapped gateway never sends a guessed model ID', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, { ANTHROPIC_BASE_URL: 'https://example.invalid' })
-  await $.command.run({ command: 'route', args: 'classifier off' })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-  expect((await $.command.run({ command: 'route', args: 'status' })).text).toContain('unmapped-target')
+test('new task does not override plan mode or pin',async($,on)=>{
+ host(on);const f=jev(on);await boot($,'plan');await cmd($,'new');await check($);expect(f.calls()).toBe(0)
+ await start($,'Plan','t','default');await cmd($,'pin');await cmd($,'new');await check($);expect(f.calls()).toBe(0)
 })
-test('new task in a resumed unmeasured session calls Jev but cannot downgrade', async ($, on) => {
-  const seen = host(on, { turns: 8, unmeasured: true })
-  const calls = fakeJev(on)
-  await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
-  await $.command.run({ command: 'route', args: 'auto' })
-  await $.command.run({ command: 'route', args: 'new' })
-  await start($); await step($)
-  expect(calls()).toBe(1)
-  expect(seen[0].model).toBe('claude-opus-5-5')
+test('same-model effort changes need acceptance and a known current effort',async($,on)=>{
+ const seen=host(on,{model:'claude-haiku-5-5'});jev(on);await boot($);await accepted($);await start($);await step($,'t',0,{model:'claude-haiku-5-5'})
+ expect(seen[0].effort).toBe('low')
 })
-test('host fallback after dispatch wins and does not retain the routed work profile', async ($, on) => {
-  const seen = host(on)
-  fakeJev(on, 'routine')
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($, 'Write a sorting function'); await step($)
-  await step($, 't', 1, { model: 'claude-haiku-5-5', effort: 'low' })
-  await start($, 'Continue', 'follow'); await step($, 'follow')
-  expect(seen.map(e => e.model)).toEqual(['claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-opus-5-5'])
+test('unknown effort suppresses same-model advice',async($,on)=>{
+ host(on,{model:'claude-haiku-5-5',unknownEffort:true});jev(on);await boot($);await check($);expect((await trace($)).counters.suggested).toBe(0)
 })
-test('trace distinguishes provider choice, policy decision, dispatch and API model', async ($, on) => {
-  host(on)
-  fakeJev(on, 'routine')
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($, 'Write a sorting function'); await step($)
-  const result = (await $.command.run({ command: 'route', args: 'trace' })).text
-  const trace = JSON.parse(result)
-  expect(trace.schemaVersion).toBe(1)
-  expect(trace.trace.provider.classification.kind).toBe('routine')
-  expect(trace.trace.decision.effort).toBe('medium')
-  expect(trace.trace.request.model).toBe('claude-sonnet-5-5')
-  expect(trace.trace.request.apiModel).toBe('claude-sonnet-5-5')
-  expect(trace.confirmedRoutedTurns).toBe(1)
-  expect(result.includes('test-only-key')).toBe(false)
-  expect(result.includes('Write a sorting')).toBe(false)
+for(const variant of ['plan','unknown-mode','host-model','effort','attachments','queue','new','off','manual','subagent']){
+ test('accepted recommendation fails closed on '+variant,async($,on)=>{
+  const seen=host(on);jev(on);await boot($);await accepted($)
+  if(variant==='new'||variant==='off')await cmd($,variant)
+  if(variant==='manual')await $.classic.PostModelSwitch({hook_event_name:'PostModelSwitch',session_id:'s',transcript_path:'',cwd:'/work',to_model:'claude-opus-5-5',source:'picker'})
+  if(variant==='attachments'||variant==='queue')await $.prompt.submit({text:TEXT,origin:{kind:'composer'},attachments:variant==='attachments'?[{type:'image'}]:[],turnId:variant==='queue'?'running':undefined})
+  await start($,TEXT,'t',variant==='plan'?'plan':variant==='unknown-mode'?'':'default')
+  const extra=variant==='host-model'?{model:'claude-sonnet-5-5'}:variant==='effort'?{effort:'max'}:variant==='subagent'?{agentId:'a'}:{}
+  await step($,'t',0,extra);expect(seen[0].model).toBe(extra.model??'claude-opus-5-5');expect(seen[0].effort).toBe(extra.effort??'high')
+ })
+}
+test('model mismatch never confirms or retains accepted profile',async($,on)=>{
+ const seen=host(on,{usage:{model:'claude-opus-5-5'}});jev(on);await boot($);await accepted($);await start($);await step($)
+ expect((await trace($)).trace.application).toBe('model-mismatch');await start($,'Continue','u');await step($,'u')
+ expect(seen[1].model).toBe('claude-opus-5-5');expect((await trace($)).counters.confirmed).toBe(0)
 })
-test('provider trace strips unrelated fields from the optional Haiku response', async ($, on) => {
-  host(on)
-  mock.env(on, {})
-  on('model.complete', () => ({ value: { isAnswered: true, text: '{"kind":"routine","independent":true,"confidence":0.99,"echo":"private-prompt-copy"}' } }))
-  await $.command.run({ command: 'route', args: 'classifier haiku' })
-  await start($, 'Write a sorting function'); await step($)
-  const trace = (await $.command.run({ command: 'route', args: 'trace' })).text
-  expect(trace.includes('private-prompt-copy')).toBe(false)
+test('suggestion card composes with other mods and exposes both actions',async($,on)=>{
+ host(on);jev(on);await boot($);await check($)
+ const ui=await $.ui.mount({plugin:'model-pilot',surface:'terminal',component:'AbovePrompt',props:{}})
+ expect(await ui.find({type:'Button',label:'Use for this task'})).toBeDefined()
+ expect(await ui.find({type:'Button',label:'Dismiss'})).toBeDefined()
+ expect(await ui.find({type:'Text',text:'Other mod'})).toBeDefined();await ui.unmount()
 })
-test('structured trace includes reported classifier tokens for benchmark overhead', async ($, on) => {
-  host(on)
-  fakeJev(on)
-  await start($); await step($)
-  const trace = JSON.parse((await $.command.run({ command: 'route', args: 'trace' })).text)
-  expect(trace.classifierTokens).toBe(0)
+test('trace contains no prompt or key',async($,on)=>{
+ host(on);jev(on);await boot($);await accepted($);const t=(await cmd($,'trace')).text
+ expect(t.includes(TEXT)).toBe(false);expect(t.includes('test-key')).toBe(false)
 })
-
-test('an abstention records its exact gate and safe signals while preserving model and effort', async ($, on) => {
-  const seen = host(on)
-  mock.env(on, { TYPESAFE_API_KEY: 'test-only-key' })
-  mock.clock(on)
-  on('http.fetch', () => ({ value: { ok: true, status: 200, headers: {}, text: JSON.stringify({
-    model: 'jev-1.13.0', echo: 'private-prompt-copy', answers: {
-      complexity: { type: 'choice', choice: 'simple', confidence: 0.8, probabilities: { simple: 0.98, routine: 0.01, complex: 0.01, unknown: 0 } },
-      independence: { type: 'choice', choice: 'independent', confidence: 1, probabilities: { independent: 1, dependent: 0 } }
-    }, usage: { input_tokens: 50, output_tokens: 20 }
-  }) } }))
-  await $.command.run({ command: 'route', args: 'auto' })
-  await start($); await step($)
-  const raw = (await $.command.run({ command: 'route', args: 'trace' })).text
-  const trace = JSON.parse(raw)
-  expect(trace.trace.provider.status).toBe('abstained')
-  expect(trace.trace.provider.reasons).toEqual(['complexity:low-confidence'])
-  expect(trace.trace.provider.signals.complexity.confidence).toBe(0.8)
-  expect(trace.trace.provider.model).toBe('jev-1.13.0')
-  expect(trace.trace.provider.policy.minConfidence).toBe(0.95)
-  expect(trace.trace.provider.questionVersion).toBe(2)
-  expect(trace.dispatchAttempts).toBe(0)
-  expect(trace.classifierTokens).toBe(70)
-  expect(seen[0].model).toBe('claude-opus-5-5')
-  expect(seen[0].effort).toBe('high')
-  expect(raw.includes('private-prompt-copy')).toBe(false)
-  expect(raw.includes('test-only-key')).toBe(false)
-  const status = (await $.command.run({ command: 'route', args: 'status' })).text
-  expect(status).toContain('complexity:low-confidence')
+test('only one physical Jev request exists even after UI timeout',async($,on)=>{
+ host(on);const f=jev(on,'simple',{delay:20000});await boot($);await edit($,TEXT);await f.clock.advance(2000)
+ await f.clock.advance(1600);await edit($,'Define DNS');await f.clock.advance(11000);expect(f.calls()).toBe(1)
+ await f.clock.advance(10000);await f.clock.settle();expect((await trace($)).counters.accepted).toBe(0)
 })
-
-test('provider usage fields cannot inject arbitrary text into the public trace', async ($, on) => {
-  host(on)
-  mock.env(on, { TYPESAFE_API_KEY: 'test-only-key' })
-  mock.clock(on)
-  on('http.fetch', () => ({ value: { ok: true, status: 200, headers: {}, text: JSON.stringify({
-    answers: {}, usage: { input_tokens: 'private-prompt-copy', output_tokens: -5 }
-  }) } }))
-  await start($); await step($)
-  const raw = (await $.command.run({ command: 'route', args: 'trace' })).text
-  expect(raw.includes('private-prompt-copy')).toBe(false)
-  expect(JSON.parse(raw).classifierTokens).toBe(0)
+test('an outstanding debounce cannot overwrite explicit acceptance',async($,on)=>{
+ host(on);const f=jev(on);await boot($);await edit($,TEXT);await accepted($);await f.clock.advance(2000);await f.clock.settle()
+ expect((await trace($)).recommendation.acceptance).toBe('accepted')
+})
+test('button acceptance and dismissal work on terminal and desktop',async($,on)=>{
+ host(on);jev(on);on('prompt.read',()=>({value:{text:TEXT,cursor:TEXT.length}}));await boot($);const r=await check($)
+ for(const surface of ['terminal','desktop']){
+  const ui=await $.ui.mount({plugin:'model-pilot',surface,component:'AbovePrompt',props:{}})
+  if(surface==='terminal'){await ui.press({key:'accept-'+r.id});expect((await trace($)).recommendation.acceptance).toBe('accepted')}
+  else expect(await ui.find({type:'Text',text:/Accepted/})).toBeDefined()
+  await ui.unmount()
+ }
+})
+test('unconsumed button becomes invalid when live composer differs',async($,on)=>{
+ host(on);jev(on);on('prompt.read',()=>({value:{text:'different',cursor:9}}));await boot($);const r=await check($)
+ const ui=await $.ui.mount({plugin:'model-pilot',surface:'terminal',component:'AbovePrompt',props:{}})
+ await ui.press({key:'accept-'+r.id});expect((await trace($)).counters.accepted).toBe(0);await ui.unmount()
+})
+test('submission transfers acceptance before composer clear',async($,on)=>{
+ const seen=host(on);jev(on);await boot($);await accepted($)
+ await $.prompt.submit({text:TEXT,origin:{kind:'composer'}})
+ await $.prompt.change({text:'',cursor:0,origin:{kind:'clear'}})
+ await start($);await step($);expect(seen[0].model).toBe('claude-haiku-5-5')
+})
+test('slash acceptance restores the checked draft without accepting an edited task',async($,on)=>{
+ host(on);const f=jev(on);let filled='';on('prompt.read',()=>({value:{text:'',cursor:0}}));on('prompt.fill',($,e)=>{filled=e.text;return {isFilled:true}})
+ await boot($);const r=await check($);await edit($,'/route accept '+r.id)
+ await $.prompt.change({text:'',cursor:0,origin:{kind:'clear'}});await cmd($,'accept '+r.id)
+ await f.clock.advance(50);await f.clock.settle();expect(filled).toBe(TEXT);expect((await trace($)).recommendation.acceptance).toBe('accepted')
+})
+test('interactive clear-before-submit transfers consent in the same dispatch cycle',async($,on)=>{
+ const seen=host(on);jev(on);await boot($);await accepted($)
+ await $.prompt.change({text:'',cursor:0,origin:{kind:'clear'}})
+ await $.prompt.submit({text:TEXT,origin:{kind:'composer'}})
+ await start($);await step($);expect(seen[0].model).toBe('claude-haiku-5-5')
+})
+test('a composer clear without submission expires consent',async($,on)=>{
+ const seen=host(on);const f=jev(on);await boot($);await accepted($)
+ await $.prompt.change({text:'',cursor:0,origin:{kind:'clear'}});await f.clock.advance(0);await f.clock.settle()
+ await start($);await step($);expect(seen[0].model).toBe('claude-opus-5-5')
+})
+test('non-plan permission-mode change invalidates unconsumed consent',async($,on)=>{
+ const seen=host(on);jev(on);await boot($);await accepted($);await start($,TEXT,'t','acceptEdits');await step($)
+ expect(seen[0].model).toBe('claude-opus-5-5')
+})
+test('configuration override after submission prevents application',async($,on)=>{
+ const seen=host(on);jev(on);on('config.set',($,e)=>({value:e.value}));await boot($);await accepted($);await start($)
+ await $.config.set({key:'effortLevel',value:'high'});await step($);expect(seen[0].model).toBe('claude-opus-5-5')
+})
+test('unmapped gateway target stays silent',async($,on)=>{
+ host(on);jev(on,'simple',{env:{ANTHROPIC_BASE_URL:'https://example.invalid'}})
+ await boot($);await check($);expect((await trace($)).counters.suggested).toBe(0)
+})
+test('explicit gateway mapping is used only after acceptance',async($,on)=>{
+ const seen=host(on);jev(on,'simple',{env:{ANTHROPIC_BASE_URL:'https://example.invalid',ANTHROPIC_DEFAULT_HAIKU_MODEL:'tenant-small'}})
+ await boot($);await accepted($);await start($);await step($);expect(seen[0].model).toBe('tenant-small')
 })

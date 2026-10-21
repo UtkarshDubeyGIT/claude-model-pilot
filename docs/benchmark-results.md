@@ -1,3 +1,5 @@
+> **0.6 note:** The live model/effort findings below are historical. Version 0.6 changes the product to explicit-acceptance advice and adds a mandatory-quality question to Jev. It does not claim new live recommendation accuracy. See [0.6 validation](validation.md) and the [48-case evaluation guide](benchmark.md).
+
 # Live benchmark results — 22 October 2026
 
 The run completed **131/131 sessions and all 146 answer turns** using the pre-0.5.0 plugin. The terminal printed `131/131` when the last session started; it was still answering four planning prompts. That final Opus/max session took **382.1 seconds**. It did not hang.

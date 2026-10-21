@@ -15,3 +15,6 @@ __pycache__/
 evals/*
 !evals/README.md
 dist/
+
+# Host-generated editor configuration for synthetic test plugins.
+/tests/fixtures/*/tsconfig.json

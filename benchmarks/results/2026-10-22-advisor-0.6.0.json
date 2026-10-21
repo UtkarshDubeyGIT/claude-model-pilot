@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "release": "0.6.0",
+  "date": "2026-10-22",
+  "host": "Claude Code 2.1.306",
+  "synthetic": true,
+  "source": {
+    "package_version": "0.6.0",
+    "plugin_version": "0.6.0",
+    "files": {
+      ".claude-plugin/plugin.json": "ff114b8b7e36fed9df571250a6aee2e529584788e74f5114a97b60c03ca750a8",
+      "benchmarks/advice.json": "9d52003c7adb1b6b0e8b035a6a22ec13cf87660ee3b54be46e54d3dfcc0df281",
+      "benchmarks/models.json": "4a6bcbbbbce6a320eb3e3aac22013709cbaf345d93f7809b69e5ad0e04caad57",
+      "benchmarks/tasks.json": "1a012638c93a4f2fb257d43655d046f916ef6cf6c7d2197c353d18b23f7e26ed",
+      "hooks/hooks.json": "448e29b17c4ce3ee767d3caf0ff9e35b5501b1cfb3b59952e7b7625744bbf070",
+      "hooks/register.js": "92c5a71844fa441c4647f9dae4346db2b6ed1790cccca455b379127ec79aba01",
+      "package.json": "127be4492f14789dc157f684b641ee1cb6d21f456cf2951d0fe6e2c8ce115a71",
+      "scripts/benchmark.py": "32bb07c9dfc2807d93b8c394431de316539a4eab2e91915ba47c5242939fd153",
+      "scripts/evaluate-advice.py": "d8e3ea08cf148670e4eb308153b8e63e2c778c2e728f2d15d00a172a91a61ba2",
+      "scripts/live-eval.py": "91807b00cfa01e302599373fa0bb61f7c211245dcbbf4158281ca0b0c2b34d5d",
+      "src/advisor.js": "466d7e9d736bef76b3c671f6ce45e31d0e6e1fc0f66ac3168f046b4fdadb859e",
+      "src/classification.js": "29c9130b96635afeaed661e5f9553193eb89ade2b7b20092d805e7e51edb56cc",
+      "src/jev.js": "79265360eba166c08b77d8c49b35e17c4e1868a7f1137f72dffd0689fc781599",
+      "src/policy.js": "414ee556f45ff61cd1e7b11746e1a631ef8aa681037a2da48a0978dbd69c5dd3",
+      "src/profiles.js": "708c5c36156b23027b1be34081e79b89a79148e7f56a005e985328edf92c8144"
+    },
+    "sha256": "d3904706cdbd8838df7fcaac02f67cb883a3fcc460e2fd6f458bcbb3a40264cc"
+  },
+  "tests": {
+    "portable": 85,
+    "native": 40,
+    "python": 31,
+    "strictPluginValidation": "passed; optional directory icon warning"
+  },
+  "policyReplay": {
+    "cases": 48,
+    "split": {
+      "calibration": 24,
+      "heldout": 24
+    },
+    "outcomes": {
+      "useful-advice": 20,
+      "justified-silence": 28
+    },
+    "liveJevAccuracyMeasured": false
+  },
+  "hostIntegration": {
+    "passed": true,
+    "scenarios": [
+      {
+        "name": "simple",
+        "answerTurns": 1,
+        "passed": true,
+        "mainRequests": [
+          {
+            "model": "claude-haiku-5-5",
+            "effort": "low",
+            "apiModel": "claude-haiku-5-5"
+          }
+        ]
+      },
+      {
+        "name": "routine",
+        "answerTurns": 1,
+        "passed": true,
+        "mainRequests": [
+          {
+            "model": "claude-sonnet-5-5",
+            "effort": "medium",
+            "apiModel": "claude-sonnet-5-5"
+          }
+        ]
+      },
+      {
+        "name": "complex",
+        "answerTurns": 1,
+        "passed": true,
+        "mainRequests": [
+          {
+            "model": "claude-opus-5-5",
+            "effort": "high",
+            "apiModel": "claude-opus-5-5"
+          }
+        ]
+      },
+      {
+        "name": "planning",
+        "answerTurns": 4,
+        "passed": true,
+        "mainRequests": [
+          {
+            "model": "claude-opus-5-5",
+            "effort": "high",
+            "apiModel": "claude-opus-5-5"
+          },
+          {
+            "model": "claude-opus-5-5",
+            "effort": "high",
+            "apiModel": "claude-opus-5-5"
+          },
+          {
+            "model": "claude-opus-5-5",
+            "effort": "high",
+            "apiModel": "claude-opus-5-5"
+          },
+          {
+            "model": "claude-opus-5-5",
+            "effort": "high",
+            "apiModel": "claude-opus-5-5"
+          }
+        ]
+      }
+    ]
+  },
+  "continuity": {
+    "sessions": 5,
+    "turns": 20,
+    "unintendedChanges": 0,
+    "efforts": [
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max"
+    ]
+  },
+  "interactive": {
+    "surface": "terminal",
+    "synthetic": true,
+    "observed": [
+      "Idle suggestion with Use for this task and Dismiss",
+      "No acceptance preserves Opus/high",
+      "Button acceptance dispatches and confirms Haiku/low",
+      "Continue retains Haiku/low",
+      "Active task profile displayed"
+    ],
+    "counters": {
+      "suggested": 1,
+      "accepted": 1,
+      "dispatched": 2,
+      "confirmed": 2
+    },
+    "hostBackgroundCallsExcluded": true
+  },
+  "limits": [
+    "No paid Jev v3 calibration or paired answer quality evaluation has been run.",
+    "API identity confirms the model, not provider-internal effort.",
+    "Policy replay uses authored labels, not independent provider predictions.",
+    "Permission state may be unavailable before the first host answer.",
+    "In-memory consent and active-profile state do not survive reload."
+  ]
+}

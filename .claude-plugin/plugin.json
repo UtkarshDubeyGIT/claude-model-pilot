@@ -1,0 +1,11 @@
+{
+  "name": "model-pilot",
+  "version": "0.5.0",
+  "description": "Suggest models and reasoning effort while preserving task continuity",
+  "author": {
+    "name": "Model Pilot contributors"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/UtkarshDubeyGIT/claude-model-router-mod",
+  "repository": "https://github.com/UtkarshDubeyGIT/claude-model-router-mod"
+}

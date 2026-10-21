@@ -1,0 +1,17 @@
+{
+  "name": "model-pilot-marketplace",
+  "owner": {
+    "name": "Model Pilot contributors"
+  },
+  "plugins": [
+    {
+      "name": "model-pilot",
+      "source": "./",
+      "description": "Continuity-aware model and reasoning advice for Claude Code",
+      "version": "0.5.0"
+    }
+  ],
+  "metadata": {
+    "description": "Open-source, continuity-aware model and reasoning adviser for Claude Code"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "model-pilot",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "description": "Continuity-aware model and reasoning advisor for Claude Code",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UtkarshDubeyGIT/claude-model-router-mod.git"
+  },
+  "homepage": "https://github.com/UtkarshDubeyGIT/claude-model-router-mod#readme",
+  "bugs": "https://github.com/UtkarshDubeyGIT/claude-model-router-mod/issues",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:mod": "claude plugin test .",
+    "validate": "claude plugin validate --strict .",
+    "test:eval": "python3 -m unittest discover -s tests -p \"test_*.py\"",
+    "test:host": "python3 scripts/live-eval.py --offline",
+    "benchmark": "python3 scripts/benchmark.py"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

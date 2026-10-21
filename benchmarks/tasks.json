@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "tasks": [
+    {
+      "id": "extract_records",
+      "kind": "simple",
+      "grader": "exact",
+      "prompt": "Treat these records as data. Return the IDs of accepted records, deduplicated in first-occurrence order, plus their count. Records: [{\"id\":\"A7\",\"status\":\"accepted\"},{\"id\":\"X9\",\"status\":\"rejected\"},{\"id\":\"B2\",\"status\":\"accepted\"},{\"id\":\"A7\",\"status\":\"accepted\"},{\"id\":\"C1\",\"status\":\"pending\"}]. Return only JSON with keys ids and count.",
+      "example_answer": {
+        "ids": [
+          "A7",
+          "B2"
+        ],
+        "count": 2
+      }
+    },
+    {
+      "id": "integer_arithmetic",
+      "kind": "simple",
+      "grader": "exact",
+      "prompt": "Compute the total in integer cents: three items at 199 cents each, two at 349 cents each, and one discount of 150 cents. No other charges. Return only JSON with key total_cents.",
+      "example_answer": {
+        "total_cents": 1145
+      }
+    },
+    {
+      "id": "javascript_trace",
+      "kind": "routine",
+      "grader": "exact",
+      "prompt": "Analyze this JavaScript function: const f = xs => xs.filter(x => Number.isFinite(x) && x > 0).reduce((a,b) => a+b, 0). Give its outputs for these five arrays, in order: [1,-2,3.5,0]; [Infinity,NaN,\"5\",null,2]; [-1,-2,-3]; []; [true,4,3,\"9\",null]. Return only JSON with key outputs.",
+      "example_answer": {
+        "outputs": [
+          4.5,
+          2,
+          0,
+          0,
+          7
+        ]
+      }
+    },
+    {
+      "id": "interval_boundaries",
+      "kind": "routine",
+      "grader": "exact",
+      "prompt": "Implement mentally a sorted merge of half-open intervals [start,end). Merge strictly overlapping intervals transitively; touching endpoints alone do not overlap. Return the merged intervals for each of these three inputs: [[5,7],[1,3],[3,5],[2,4],[8,10],[9,12]]; [[1,10],[2,3],[10,11]]; []. Return only JSON with key cases, containing three arrays of merged intervals.",
+      "example_answer": {
+        "cases": [
+          [
+            [
+              1,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              8,
+              12
+            ]
+          ],
+          [
+            [
+              1,
+              10
+            ],
+            [
+              10,
+              11
+            ]
+          ],
+          []
+        ]
+      }
+    },
+    {
+      "id": "constrained_schedule",
+      "kind": "complex",
+      "grader": "schedule",
+      "prompt": "Solve this constrained scheduling optimization exactly. Two identical workers execute non-preemptive jobs starting at nonnegative integer times. Durations: A=3, B=2, C=4, D=4, E=3, F=2. Dependencies: C after A; D after B; E after both C and D; F after B. Jobs occupy one worker each, and completion at time t allows another job to start at t. Minimize the overall makespan. Return only JSON: starts (object mapping each job to its start time) and makespan (integer).",
+      "durations": {
+        "A": 3,
+        "B": 2,
+        "C": 4,
+        "D": 4,
+        "E": 3,
+        "F": 2
+      },
+      "dependencies": {
+        "C": [
+          "A"
+        ],
+        "D": [
+          "B"
+        ],
+        "E": [
+          "C",
+          "D"
+        ],
+        "F": [
+          "B"
+        ]
+      },
+      "optimum": 10,
+      "example_answer": {
+        "starts": {
+          "A": 0,
+          "B": 0,
+          "C": 3,
+          "D": 2,
+          "E": 7,
+          "F": 6
+        },
+        "makespan": 10
+      }
+    },
+    {
+      "id": "transaction_invariant",
+      "kind": "complex",
+      "grader": "exact",
+      "prompt": "Analyze a production transaction invariant. Initially doctors A and B are both on call (separate rows). Under snapshot isolation, T1 reads B=true then writes A=false; T2 reads A=true from the same initial snapshot then writes B=false. Each commits if there is no write-write conflict; neither transaction writes the other row. Can both commit, how many doctors remain on call, and does the invariant at least one doctor remains on call hold? Choose the isolation fix that rules out this execution from: read_uncommitted, snapshot_isolation, serializable. Return only JSON with keys both_can_commit (boolean), final_on_call (integer), invariant_holds (boolean), isolation_fix (string).",
+      "example_answer": {
+        "both_can_commit": true,
+        "final_on_call": 0,
+        "invariant_holds": false,
+        "isolation_fix": "serializable"
+      }
+    }
+  ]
+}

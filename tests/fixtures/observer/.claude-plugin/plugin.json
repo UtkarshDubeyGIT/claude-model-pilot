@@ -1,0 +1,8 @@
+{
+  "name": "model-pilot-benchmark-observer",
+  "version": "0.0.1",
+  "description": "Read-only outgoing model and effort observer for benchmarks",
+  "author": {
+    "name": "Model Pilot contributors"
+  }
+}

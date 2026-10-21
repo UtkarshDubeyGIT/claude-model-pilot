@@ -1,0 +1,30 @@
+# Recommendation extension boundaries
+
+The recommendation pipeline deliberately has separate seams:
+
+1. **Eligibility** (`classificationEligibility` in `src/policy.js`) decides whether a prompt may be sent to a provider. Planning, manual pins, queued/attached context and continuing work are protected first. Eligibility does not depend on a local model suggestion or on available cache measurements.
+2. **Provider adapter** (`src/jev.js`, with host transport in `hooks/register.js`) builds the TypeSafe request and validates typed answers. `src/classification.js` defines and sanitizes the provider-neutral contract. The policy consumes only `{ kind, independent, confidence }`. Transport returns a status, optional classification and reported usage. An unavailable or abstaining provider does not silently become a keyword classifier, including the optional Haiku provider.
+3. **Policy and profiles** (`src/policy.js`, `src/profiles.js`) choose whether a valid recommendation should be applied. The `profiles` argument is injectable for experiments; production defaults are `PROFILES`. Effort comes from these profiles. Cache limits and cooldown are policy, not provider eligibility. Eligible high-impact work on a lower family is promoted to Opus/high independently of experimental profiles. An existing Opus selection keeps its chosen effort; this rule does not impose a universal effort floor.
+4. **Host application** (`hooks/register.js`) resolves a family to a concrete deployment ID and passes one request to `next`. It never replays a streamed model request. It respects model changes made by the host and commits a sticky work profile only when the response reports the requested model.
+
+The host transport stays in the hooks module because Claude Code statically discovers capability calls there. Keep request construction, response validation and decision logic pure in imported modules. To add a provider, add an adapter with the same classification contract, a bounded transport branch, and an explicit `/route classifier` option. Do not change continuity guards to accommodate a provider. Invalid, missing, dependent or low-confidence decisions must preserve the existing model.
+
+To update model versions, change `MODEL_IDS`, or configure the deployment's `ANTHROPIC_DEFAULT_{HAIKU,SONNET,OPUS}_MODEL` variables. Use full IDs: `turn.step` does not resolve aliases. Gateways/cloud providers require explicit target mappings. Unknown currently selected model families remain protected. Profiles can evolve independently from IDs and provider questions.
+
+`/route profiles` reports `PROFILE_VERSION`, the default profile table and resolved deployment IDs. Profiles are source configuration, not a user-defined JSON file or a new CLI setter. A profile's effort applies when routing changes model families. A same-family decision preserves the user's selected effort. Planning and pins preserve both model and effort. Adding same-family effort adjustment later requires its own user-control and continuity design; it must not be inferred from the model sweep alone.
+
+## Versioned Jev questions and acceptance
+
+`JEV_QUESTION_VERSION` identifies the classification rubric. Version 2 distinguishes mechanical extraction from code reasoning and interacting constraints, and treats inline data/code as potentially self-contained. Formatting requirements alone do not make a task complex or dependent. This revision addresses ambiguity in the questions; it has not yet demonstrated improved live acceptance on the benchmark corpus.
+
+`JEV_POLICY` separately versions acceptance thresholds. Policy version 1 requires confidence and selected-option probability of at least 0.95 for both Choice answers. Labels, bounded probabilities, normalization and the selected maximum are validated before acceptance. Unknown complexity or dependent tasks preserve the selected model. Confidence is not calibrated correctness; do not lower thresholds merely to increase switching.
+
+`evaluateJev` returns sanitized Choice signals, explicit rejection reasons, question/policy versions and an optional tightly constrained returned model identifier even when it abstains. `parseJev` retains the simpler accepted-classification interface. This lets future calibration compare raw decisions with policy acceptance without collecting prompts or arbitrary provider text in production traces. Usage counters accept only nonnegative safe integers.
+
+## Diagnostics and evaluation
+
+`/route trace` schema version 1 contains only the last in-memory decision, classifier counts, dispatch attempts and confirmed routed turns. It separates provider signals and rejection reasons, accepted classification, policy decision, outgoing model/effort, and API-reported model. It does not include prompts or credentials. API identity confirms the model only, not effective reasoning effort or answer quality. Missing and mismatching API models remain unverified/mismatched rather than claimed successes.
+
+Every behavioral change needs a regression test at its seam. Run portable policy/adapter tests, native mod tests, evaluation-checker tests, and the real-host offline suite. The offline fixture is loaded explicitly only by `scripts/live-eval.py --offline`; never install it in normal sessions. Then use the live suite to judge real Jev outputs and task quality. Keep results timestamped so before/after evidence survives.
+
+The first expanded live sweep produced six Jev abstentions and zero routing changes. The old trace did not retain rejected Choice signals, so it cannot establish whether thresholds, labels or independence drove those decisions. The new diagnostics make a targeted rerun useful. Before changing defaults, compare repeated, representative tasks with labels reviewed independently of Jev. Measure acceptance, incorrect downgrades, output-format compliance, completion quality, latency, cache costs and both providers' charges. Use a held-out set when tuning a rubric or threshold.

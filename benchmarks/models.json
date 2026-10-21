@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "verified_on": "2026-10-22",
+  "scope": "Current general-purpose tiers; excludes legacy versions and restricted specialized models.",
+  "sources": [
+    "https://platform.claude.com/docs/en/about-claude/models/overview",
+    "https://platform.claude.com/docs/en/build-with-claude/effort",
+    "https://code.claude.com/docs/en/model-config"
+  ],
+  "models": [
+    {
+      "family": "haiku",
+      "id": "claude-haiku-5-5",
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "purpose": "High-volume classification, extraction, routing and latency-sensitive tasks."
+    },
+    {
+      "family": "sonnet",
+      "id": "claude-sonnet-5-5",
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "purpose": "Balance of speed and capability; scoped coding and general work."
+    },
+    {
+      "family": "opus",
+      "id": "claude-opus-5-5",
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "purpose": "Complex reasoning, sustained coding and knowledge work."
+    },
+    {
+      "family": "fable",
+      "id": "claude-fable-5-1",
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "purpose": "Demanding reasoning and long-horizon agentic work."
+    }
+  ]
+}

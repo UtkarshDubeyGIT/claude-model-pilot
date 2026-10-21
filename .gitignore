@@ -1,0 +1,17 @@
+node_modules/
+.claude-plugin/types/
+.claude/
+*.log
+.DS_Store
+
+.env
+.env.*
+
+__pycache__/
+*.pyc
+
+# Evaluation runs contain local paths and session identifiers. Publish only
+# reviewed aggregate evidence under benchmarks/results/.
+evals/*
+!evals/README.md
+dist/

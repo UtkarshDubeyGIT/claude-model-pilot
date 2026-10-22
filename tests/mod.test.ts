@@ -59,20 +59,21 @@ async function edit($,text){await $.prompt.edit({text:'',cursor:0,start:0,end:0,
 async function expectBand($,text,props={},surface='terminal'){
  const ui=await $.ui.mount({plugin:'model-pilot',surface,component:'AbovePrompt',props})
  expect(await ui.find({type:'Text',text})).toBeDefined()
+ expect(await ui.find({type:'Text',text:'🧭 Model Pilot'})).toBeDefined()
  expect(await ui.find({type:'Text',text:'Other mod'})).toBeDefined()
  await ui.unmount()
 }
 
 test('persistent band explains startup without a draft or provider call',async($,on)=>{
  host(on,{model:'claude-sonnet-5-5',unknownEffort:true});const f=jev(on);await boot($,'')
- for(const surface of ['terminal','desktop'])await expectBand($,/Model Pilot · sonnet · waiting for session state/,{},surface)
+ for(const surface of ['terminal','desktop'])await expectBand($,/⏳ waiting for session state/,{},surface)
  expect(f.calls()).toBe(0)
 })
 test('persistent band shows protected work during a turn and off after disabling',async($,on)=>{
  const seen=host(on);const f=jev(on);await boot($,'plan')
  await start($,'Plan the work','t','plan')
  await expectBand($,/planning protected/,{isWorking:true})
- await step($);await cmd($,'off');await expectBand($,/Model Pilot .*off/)
+ await step($);await cmd($,'off');await expectBand($,/💤 off/)
  expect(f.calls()).toBe(0);expect(seen[0].model).toBe('claude-opus-5-5')
 })
 test('persistent band distinguishes assessment, abstention and edited drafts',async($,on)=>{

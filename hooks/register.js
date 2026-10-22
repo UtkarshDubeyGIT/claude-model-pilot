@@ -256,7 +256,25 @@ export function register(on) {
     const shown=mode!=='off'&&!clearing&&!busy&&!e.props?.isWorking&&r && advisor.valid(r.id) && ['suggested','accepted'].includes(r.acceptance)
     const current=sticky?.label || family(model) || 'host model'
     const currentEffort=sticky?.effort ?? effort
-    const children=[rest,Text({dimColor:true,children:[`Model Pilot · ${current}${currentEffort?` / ${currentEffort}`:''} · ${bandStatus()} · /route status`]})]
+    const state=bandStatus()
+    const protectedState=/protected|pinned/.test(state)
+    const attention=/missing|unavailable/.test(state)
+    const ready=/advice ready|accepted/.test(state)
+    const waiting=/waiting|assessing/.test(state)
+    const icon=protectedState?'🔒':attention?'⚠️':ready?'✨':waiting?'⏳':'💤'
+    const tone=attention?'yellow':ready?'green':protectedState?'cyan':undefined
+    const separator=key=>Text({key,dimColor:true,children:['│']})
+    const statusLine=Box({flexDirection:'row',alignItems:'center',columnGap:1,paddingX:1,flexWrap:'wrap',children:[
+      Text({key:'brand',color:'cyan',children:['🧭 Model Pilot']}),
+      separator('model-separator'),
+      Text({key:'model',bold:true,children:[current[0].toUpperCase()+current.slice(1)]}),
+      ...(currentEffort?[Text({key:'effort',dimColor:true,children:[`· ${currentEffort}`]})]:[]),
+      separator('state-separator'),
+      Text({key:'state',...(tone?{color:tone}:{dimColor:true}),children:[`${icon} ${state}`]}),
+      separator('help-separator'),
+      Text({key:'help',dimColor:true,children:['/route']}),
+    ]})
+    const children=[rest,statusLine]
     if(sticky) children.push(Text({dimColor:true,children:[`Model Pilot · active task: ${sticky.label} / ${sticky.effort} (API model confirmed; effort requested)`]}))
     if(shown) {
       children.push(Text({children:[`Model Pilot ${r.id} · ${r.proposed.model} / ${r.proposed.effort} · ${r.benefit} ${r.tradeoff}`]}))
@@ -302,7 +320,7 @@ export function register(on) {
     else if(arg==='classifier haiku')return {text:'0.6 uses Jev for quality assessment. The legacy Haiku classifier is retired; use /route classifier jev or off.'}
     else if(arg&&arg!=='status')return {text:'Usage: /route [status|trace|profiles|check PROMPT|accept ID|dismiss ID|advise|off|pin|unpin|new|classifier jev|classifier off]'}
     const d=await diagnostics($)
-    return {text:`Model Pilot 0.6.2 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'} (presence only, not authentication verified). Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
+    return {text:`Model Pilot 0.6.3 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'} (presence only, not authentication verified). Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
   })
   on('turn.start',async($,e,next)=>{
     if(e.agentId)return next(e)

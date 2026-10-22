@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.3 experimental — 2026-10-22
+
+- Style the persistent composer line with a compass emoji, bold model name, muted effort/help text and dividers, plus state-specific icons and colors. Match the compact visual rhythm of Token Weather while preserving its content.
+- Allow the line to wrap in narrow terminals. Rendering, privacy, advice policy and acceptance behavior are unchanged; presentation version is now 3.
+
 ## 0.6.2 experimental — 2026-10-22
 
 - Keep a compact Model Pilot status line above the composer before the first draft, while task protection is active, during turns, and when advice is off. Preserve other mods; yield to host surveys and respect host band collapse.

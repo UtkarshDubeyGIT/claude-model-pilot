@@ -1,3 +1,9 @@
+# Validation record — 0.6.3 experimental
+
+22 October 2026, Claude Code **2.1.306**. Visual-only update: segmented status row, emoji icons, muted dividers, bold model name and narrow-terminal wrapping. All 165 existing automated tests passed (85 portable, 49 native, 31 Python); native display expectations were updated for the segmented row on terminal and desktop. Strict validation passed with the existing optional icon warning. The isolated interactive terminal rendered the styled startup line with zero model requests. Recommendation policy and request application are unchanged; the prior synthetic integration results below are from 0.6.2, not a new live-provider test.
+
+---
+
 # Validation record — 0.6.2 experimental
 
 22 October 2026, Claude Code **2.1.306**. This patch adds a persistent composer status line; it does not change recommendation or application policy.

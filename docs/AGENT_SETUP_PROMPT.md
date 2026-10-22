@@ -1,7 +1,7 @@
 # Give this prompt to your agent
 
 ```text
-Install Model Pilot 0.7.0 experimental from:
+Install Model Pilot 0.7.1 experimental from:
 https://github.com/UtkarshDubeyGIT/claude-model-router-mod
 
 Read README.md, docs/INSTALL.md and SECURITY.md. Inspect the plugin manifests

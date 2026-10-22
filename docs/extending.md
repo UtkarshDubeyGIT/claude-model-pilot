@@ -7,7 +7,7 @@ The pipeline is **Jev assessment → task protection → quality/cost comparison
 | Jev questions and typed evidence | `src/jev.js` | question 3; gates 1 |
 | Task protection | `src/policy.js` | 2 |
 | Quality/cost comparison | `src/policy.js` | 2 |
-| Consent ledger and presentation | `src/advisor.js`, `hooks/register.js` | 4 |
+| Consent ledger and presentation | `src/advisor.js`, `hooks/register.js` | 5 |
 | Initial candidate mappings | `src/profiles.js` | 1 |
 | Trace | `/route trace` | schema 2 |
 

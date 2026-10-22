@@ -1,3 +1,9 @@
+# Validation record — 0.7.1 experimental
+
+22 October 2026, Claude Code **2.1.308**. Visual-only patch: the orange mascot now occupies two terminal cells, approximately one emoji's width, instead of seven. All 62 native mod tests and strict validation passed (the existing optional listing-icon warning remains). Credential, recommendation and request-application logic are unchanged; the detailed 0.7.0 results below remain historical evidence, not a rerun.
+
+---
+
 # Validation record — 0.7.0 experimental
 
 22 October 2026, macOS and Claude Code **2.1.308**. Persistent credentials, key lifecycle controls and terminal mascot; recommendation thresholds remain unchanged.

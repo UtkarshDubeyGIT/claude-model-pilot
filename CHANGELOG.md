@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 experimental — 2026-10-22
+
+- Reduce the orange terminal mascot from seven cells to two (`▛▜`), approximately the width of one emoji. Keep the status row compact; no credential or recommendation behavior changes.
+
 ## 0.7.0 experimental — 2026-10-22
 
 - Add persistent TypeSafe keys through a Python 3 macOS Keychain adapter: hidden terminal setup, explicit import from the user's shell, replacement, and verified deletion. No plaintext fallback. Explicit environment overrides retain priority; Windows/Linux continue to support environment injection.

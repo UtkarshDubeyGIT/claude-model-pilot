@@ -4,7 +4,7 @@
 
 Model Pilot recommends a better **quality–cost tradeoff** when there is enough evidence. It can suggest a smaller model, stronger reasoning, or a different effort on the same model. Speed is secondary. Reduced depth or polish may be acceptable; correctness, safety, required functionality and output format remain requirements.
 
-**0.7.0 experimental · MIT · tested with Claude Code 2.1.308.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
+**0.7.1 experimental · MIT · tested with Claude Code 2.1.308.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
 
 ## Install
 
@@ -45,7 +45,7 @@ Claude’s **“auto mode on” footer controls tool permissions**. It does not 
 The compact status line uses an emoji compass, a bold model name, muted dividers and state icons, alongside other mods such as Token Weather:
 
 ```text
-🧭 Model Pilot │ ▐▛███▜▌ Sonnet · high │ 🔑 key ready │ 🔒 task protected │ /route
+🧭 Model Pilot │ ▛▜ Sonnet · high │ 🔑 key ready │ 🔒 task protected │ /route
 ```
 
 It appears above the composer immediately after loading. Claude controls this band: a survey temporarily takes precedence, and users can collapse/expand it with `ctrl+x ctrl+a`. `/route off` leaves an “off” indicator visible and stops assessment/application.

@@ -1,6 +1,6 @@
 {
   "name": "model-pilot",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "type": "module",
   "description": "Continuity-aware model and reasoning advisor for Claude Code",

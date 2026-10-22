@@ -305,7 +305,7 @@ export function register(on) {
     const statusLine=Box({flexDirection:'row',alignItems:'center',columnGap:1,paddingX:1,flexWrap:'wrap',children:[
       Text({key:'brand',color:'cyan',children:['🧭 Model Pilot']}),
       separator('model-separator'),
-      Text({key:'mascot',color:'#D97757',children:['▐▛███▜▌']}),
+      Text({key:'mascot',color:'#D97757',children:['▛▜']}),
       Text({key:'model',bold:true,children:[current[0].toUpperCase()+current.slice(1)]}),
       ...(currentEffort?[Text({key:'effort',dimColor:true,children:[`· ${currentEffort}`]})]:[]),
       separator('state-separator'),
@@ -386,7 +386,7 @@ export function register(on) {
     else if(arg==='classifier haiku')return {text:'0.6 uses Jev for quality assessment. The legacy Haiku classifier is retired; use /route classifier jev or off.'}
     else if(arg&&arg!=='status')return {text:'Usage: /route [status|key setup|key status|key test|key remove|trace|profiles|check PROMPT|accept ID|dismiss ID|advise|off|pin|unpin|new|classifier jev|classifier off]'}
     const d=await diagnostics($)
-    return {text:`Model Pilot 0.7.0 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'}. ${keySummary()} Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
+    return {text:`Model Pilot 0.7.1 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'}. ${keySummary()} Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
   })
   on('turn.start',async($,e,next)=>{
     if(e.agentId)return next(e)

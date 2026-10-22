@@ -164,7 +164,7 @@ test('key test checks no user draft and refuses overlapping requests',async($,on
 test('model band includes an orange terminal mascot',async($,on)=>{
  host(on,{savedKey:'saved-fixture-key'});jev(on);await boot($)
  const ui=await $.ui.mount({plugin:'model-pilot',surface:'terminal',component:'AbovePrompt',props:{}})
- expect(await ui.find({type:'Text',text:'▐▛███▜▌'})).toBeDefined()
+ expect(await ui.find({type:'Text',text:'▛▜'})).toBeDefined()
  await ui.unmount()
 })
 

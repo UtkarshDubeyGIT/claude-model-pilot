@@ -1,124 +1,170 @@
-# Model Pilot — Claude Model Router Mod
+<img width="2172" height="724" alt="image" src="https://github.com/user-attachments/assets/07df6688-d734-4d51-af1f-9e467634baef" alt="Model Pilot — Claude Code mod for suggesting the right model"/>
+<div align="center">
 
-**Jev-powered model and effort advice before you send. You decide whether to use it.**
+# Model Pilot
 
-Model Pilot recommends a better **quality–cost tradeoff** when there is enough evidence. It can suggest a smaller model, stronger reasoning, or a different effort on the same model. Speed is secondary. Reduced depth or polish may be acceptable; correctness, safety, required functionality and output format remain requirements.
+**A Claude Code mod that suggests the right model and reasoning effort for your task — before you send.**
 
-**0.7.1 experimental · MIT · tested with Claude Code 2.1.308.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
+Spend less on simpler tasks, use stronger reasoning when it matters, and stay in control of every suggestion.
 
-## Install
+[Installation](#installation) · [How it works](#how-it-works) · [Commands](#commands) · [Documentation](#documentation)
 
-```sh
+</div>
+
+## What is Model Pilot?
+
+Model Pilot is a **model and effort suggester for Claude Code**. It examines eligible unfinished prompts and recommends a different Claude model or reasoning effort **only when there is enough evidence that the change could improve the quality–cost tradeoff**.
+
+It can recommend a lighter model for straightforward work, a stronger one for demanding tasks, or a different effort level on your current model. **It never switches your model without your approval.**
+
+### Highlights
+
+- **Suggestions before sending:** See advice while composing your prompt, not after the request has started.
+- **Quality-aware choices:** Balance cost with correctness, safety, functionality, and required output format.
+- **You decide:** Accept the suggested profile for this task or dismiss it and keep your current selection.
+- **Task continuity:** Keep the accepted model across related follow-ups, planning, and implementation.
+- **Explainable behavior:** Inspect the current state, decision trace, and model profiles using `/route` commands.
+- **Conservative by design:** When evidence or required session state is missing, Model Pilot does not guess.
+
+## Installation
+
+### 1. Install the Claude Code plugin
+
+Run these commands in your terminal:
+
+```bash
 claude plugin marketplace add UtkarshDubeyGIT/claude-model-router-mod
 claude plugin install model-pilot@model-pilot-marketplace --scope user
 ```
 
-Create a key in the [TypeSafe console](https://console.typesafe.ai). On **macOS**, run this inside Claude:
+### 2. Configure TypeSafe
+
+Model Pilot uses TypeSafe to assess eligible drafts. Create an API key in the [TypeSafe console](https://console.typesafe.ai).
+
+**macOS:** Inside Claude Code, run:
 
 ```text
 /route key setup
 ```
 
-It gives you a terminal command for a hidden-input setup helper. Run that command in a separate terminal and enter the key there. The helper saves it directly to **macOS Keychain**; it does not write a credentials file. Python 3 is required for saved-key support. Then run `/route key status` in Claude—no restart or repeated export is needed. Subsequent sessions load the saved key automatically.
+Follow the instructions to enter your key securely in a **separate terminal**. The setup helper saves it in macOS Keychain (requires Python 3), without writing a plaintext credentials file.
 
-On Windows/Linux, or for enterprise secret-manager injection, supply `TYPESAFE_API_KEY` in the shell launching Claude. An explicit environment key takes priority over the saved key. [All setup methods and key management](docs/INSTALL.md#set-the-typesafe-key).
+**Windows / Linux / managed environments:** Supply `TYPESAFE_API_KEY` in the environment that launches Claude Code. See the [key setup guide](docs/INSTALL.md#set-the-typesafe-key) for supported methods.
 
-**Advice is enabled by default. Eligible unfinished drafts are sent to TypeSafe after you stop editing, even if you never send them to Claude.** TypeSafe charges are separate. The mod keeps drafts and cached assessments only in session memory; it does not write prompt logs. `/route off` stops new assessments. Never paste a key into chat or a command argument.
+**Important:** Advice is enabled by default. **Eligible drafts can be sent to TypeSafe after you pause typing, even if you never submit them to Claude.** TypeSafe usage can incur separate charges. Review the [security disclosure](SECURITY.md) before using the mod with sensitive information. Use `/route off` to stop new assessments.
 
-[Full installation guide, including Bash](docs/INSTALL.md) · [Copy-paste setup prompt for your agent](docs/AGENT_SETUP_PROMPT.md) · [Security disclosure](SECURITY.md)
+### 3. Check that it's ready
 
-## Verify that advice can run
-
-Run `/route status` in Claude after installation. It reports the current protection, key source and authentication state (presence alone does not verify it), permission state, and the last assessment reason. No API call is made by this command.
-
-- **Ongoing task protected:** Jev is deliberately skipped. Finish that task, then use `/route new` only when starting an independent task. Follow-ups, asides and related implementation remain protected.
-- **Permission state is unknown:** this also occurs in a fresh interactive terminal on the tested host, even when its footer says “auto mode on.” The mod waits for authoritative lifecycle state, which may arrive only with the first normal answer. After finishing that task, use `/route new`. Do not bypass the guard.
-- **Key missing:** use `/route key setup`, or restart Claude from the shell where you exported the key. **Key unavailable:** unlock macOS Keychain and check that Python 3 is installed; no plaintext fallback is used.
-- **No card after an eligible assessment:** the current profile may fit, Jev may abstain, or context reload may outweigh savings. `/route trace` distinguishes these. A suggestion is not a loading indicator.
-
-For a small test, use a separate, low-context session. After permission state is known and the initial task is complete, run `/route new`, type `What does HTTP stand for?`, and pause without sending. A card requires a suitable current profile and confident live Jev evidence; it is not guaranteed. `/route check What does HTTP stand for?` explicitly assesses the same draft and prints the outcome. Both draft assessment and `/route check` use TypeSafe and are separately billed.
-
-Claude’s **“auto mode on” footer controls tool permissions**. It does not mean Model Pilot automatically changes models.
-
-## How it feels
-
-The compact status line uses an emoji compass, a bold model name, muted dividers and state icons, alongside other mods such as Token Weather:
+In Claude Code, run:
 
 ```text
-🧭 Model Pilot │ ▛▜ Sonnet · high │ 🔑 key ready │ 🔒 task protected │ /route
+/route status
 ```
 
-It appears above the composer immediately after loading. Claude controls this band: a survey temporarily takes precedence, and users can collapse/expand it with `ctrl+x ctrl+a`. `/route off` leaves an “off” indicator visible and stops assessment/application.
+This displays the current task protection, key state, permission state, and last assessment reason. The status command itself makes no provider call.
 
-Pause typing for two seconds. When a change is justified, one compact suggestion appears above the composer with the proposed model/effort, expected benefit, tradeoff, and **Use for this task / Dismiss** buttons. A compact Model Pilot status line remains visible even when there is no recommendation. It shows the current profile and states such as waiting for session state, task protected, assessing draft, insufficient evidence, or off. Rendering the line makes no provider calls. Focus the band with `ctrl+x tab` or click it to use the buttons.
+For complete setup instructions, see [docs/INSTALL.md](docs/INSTALL.md). Prefer having an agent handle setup? Use the [agent setup prompt](docs/AGENT_SETUP_PROMPT.md).
 
-Sending before advice is ready uses your current selection. Accepting authorizes only the displayed recommendation for the matching draft and task. Editing the task draft or changing model, effort, mode or task boundary invalidates unconsumed acceptance. The mod never delays submission to wait for Jev and never replays a started request.
+## How it works
 
-Once the API confirms an accepted model, its requested effort and model remain active for that task's follow-ups. The band displays the active task profile. Saved Claude defaults stay unchanged. The API reports model identity; it does **not** independently verify effective reasoning effort.
+1. **Write a prompt.** In an eligible session, pause typing for roughly two seconds.
+2. **Review a suggestion.** If Model Pilot finds a justified alternative, it shows the proposed model and effort, expected benefit, and tradeoff.
+3. **Choose what to do.** Select **Use for this task** or **Dismiss**. No suggestion means your current selection remains in place.
+4. **Keep working.** An accepted profile stays with that task's related follow-ups. Model Pilot protects planning continuity and does not change your saved Claude defaults.
 
-**Planning continuity is a hard constraint.** Plan → follow-up → simple aside → implementation → return to plan stays on the task profile. Leaving plan mode, or typing “Unrelated question:”, does not unlock it. `/route new` establishes a new task, but cannot override plan mode or a pin. Resumed sessions protect their host-selected profile; in-memory advice and acceptance do not survive a reload.
+A compact status line shows what Model Pilot is doing, even when there is no recommendation:
 
-The host must expose permission state before assessment. Some hosts, including the tested headless CLI, do so only after the first answer. The status line says “waiting for session state”; no draft is assessed while state is unknown. After finishing that task, `/route new` explicitly starts an eligible task. Do not disable the guard to force advice.
+```text
+🧭 Model Pilot │ Sonnet · high │ 🔑 key ready │ 🔒 task protected │ /route
+```
+
+**The key distinction:** Model Pilot **suggests**; you approve. It does not delay a request to wait for advice, or replay a request that has already started. Suggestions are predictions, not guarantees of cost savings or answer quality.
 
 ## Commands
 
-| Command | Purpose |
+| Command | What it does |
 | --- | --- |
-| `/route status` | Protections, active profile, provider state and separate counters |
-| `/route key setup` / `/route key replace` | Show the hidden-input Keychain helper command |
-| `/route key status` | Key source and missing/unverified/verified/rejected state, never its value |
-| `/route key test` | Explain an optional, potentially billable synthetic check; `test confirm` sends it |
-| `/route key remove` | Explain local deletion; `remove confirm` deletes only Model Pilot's saved entry |
-| `/route trace` | Sanitized evidence and application outcome; no draft text |
-| `/route profiles` | Initial mappings and deployment IDs |
-| `/route accept <id>` | Accept the displayed advice for its matching draft/task |
-| `/route dismiss <id>` | Dismiss without changing the request |
-| `/route check <prompt>` | Explicitly assess a draft; useful in headless clients |
-| `/route advise` / `/route off` | Enable advice / stop new assessments and application |
-| `/route pin` / `/route unpin` | Lock / release the current host selection |
-| `/route new` | Explicit task boundary; planning and pins still win |
-| `/route classifier jev` / `/route classifier off` | Enable / disable Jev assessment |
-| `/route auto` | Migration explanation only; automatic changes were removed |
+| `/route status` | Show active profile, protections, key state, and assessment status |
+| `/route check <prompt>` | Explicitly assess a prompt, including in headless workflows |
+| `/route trace` | Show a sanitized decision trace without the draft text |
+| `/route profiles` | View the available model/effort mappings |
+| `/route advise` | Enable advice |
+| `/route off` | Stop new assessments and application |
+| `/route new` | Mark the start of an independent task |
+| `/route pin` / `/route unpin` | Keep or release a manually chosen model |
+| `/route accept <id>` / `/route dismiss <id>` | Accept or dismiss a matching suggestion |
+| `/route key setup` / `/route key status` | Configure a saved key or inspect key status |
+| `/route key replace` / `/route key remove` | Replace or remove a saved key |
+| `/route key test` | Prepare an optional, potentially billable authentication check |
+| `/route classifier jev` / `/route classifier off` | Enable or disable the classifier |
 
-With the command alternative, send the **exact checked draft** after acceptance. Interactive slash acceptance restores it to the composer when possible. Changes invalidate consent. Command text can appear in Claude's own transcript; the mod's trace omits it.
+The `/route auto` command is retained for migration guidance; **automatic model switching is not supported**. A manual model selection pins the current profile. Task boundaries do not override a pin or planning protection.
 
-Manual model selection pins advice. `/route off`, a manual override, or a host mismatch releases a mod-applied task profile; subsequent requests use the host selection. This is an explicit override, not a background recommendation.
+## Troubleshooting
 
-## Evidence and extensibility
+**I don't see a suggestion.** This can be normal: your current model may already fit, the evidence may be insufficient, or context-switching may outweigh the potential benefit. Use `/route trace` to inspect the reason.
 
-The initial profiles remain **Haiku/low, Sonnet/medium, Opus/high**. Jev evaluates complexity, independence, and whether the mapped candidate can meet mandatory quality requirements. Each answer needs confidence and selected-option probability ≥0.95. Abstention means insufficient evidence—not that the current choice is optimal. Same-model effort suggestions require a reliably observed current effort.
+**It says “task protected.”** Model Pilot won't reassess the middle of an ongoing task. Finish that task, then use `/route new` when beginning a genuinely independent task.
 
-Assessment, task protection, quality/cost comparison and presentation have separate versions. The profile catalog and provider adapter are separate from acceptance and host application. [Extension guide](docs/extending.md)
+**It says “waiting for session state.”** Claude Code has not yet exposed the lifecycle/permission information needed to assess safely. Some sessions provide it only after the first response. Do not bypass this protection.
 
-The historical 120-answer model sweep found **120 semantically correct answers and 97 strict-format passes**. Twenty Opus planning turns retained their selected profiles. Six tiny tasks do not establish a universal best model, effort or savings claim. Fable and higher efforts remain available for benchmarking, not default advice targets. [Historical results](docs/benchmark-results.md)
+**My key isn't available.** Check `/route key status`. On macOS, ensure Keychain is unlocked and Python 3 is installed. On other platforms, confirm `TYPESAFE_API_KEY` is provided to the Claude Code process.
 
-Version 0.6 adds **24 calibration + 24 held-out scenarios** and measures useful advice, justified silence and mandatory quality separately. Offline tests verify policy and application. They do not establish live Jev accuracy. [Evaluation guide](docs/benchmark.md) · [Validation evidence](docs/validation.md)
+**Does Claude Code's “auto mode” enable routing?** No. That is a tool-permission mode, not Model Pilot's model selection.
 
-## Develop and evaluate
+See the [installation guide](docs/INSTALL.md) and [validation notes](docs/validation.md) for more details.
 
-No npm dependencies or build step. Saved macOS keys require Python 3 and an accessible Keychain; environment-only use does not. Development needs Node 20+, Python 3.9+ and a compatible Claude Code CLI.
+## Privacy and safeguards
 
-```sh
+- **Draft assessments:** Eligible unfinished prompt text is sent to TypeSafe when advice is enabled, including drafts you do not submit to Claude.
+- **Costs:** TypeSafe assessments are charged separately; explicitly running `/route check` can also incur charges.
+- **Local handling:** The mod keeps drafts and assessment caches in session memory and does not write its own prompt logs.
+- **Credentials:** macOS saved-key setup uses Keychain. An environment-provided key takes precedence. Never paste API keys into a chat message or command argument.
+- **User approval:** Only accepting a matching suggestion authorizes its use. Editing the draft or changing model, effort, mode, or task boundary can invalidate that approval.
+- **Safe fallback:** If needed session details, model mappings, or other required inputs are unavailable, assessment is skipped rather than forced.
+
+For the full data-flow and deployment considerations, read [SECURITY.md](SECURITY.md) and the [enterprise setup guide](docs/INSTALL.md#enterprise-deployment).
+
+## Development
+
+The mod has no npm dependency installation or build step. For development, use a compatible Claude Code CLI, Node.js 20+, and Python 3.9+.
+
+```bash
 npm test
 npm run test:eval
 npm run test:mod
 npm run validate
 npm run test:host
-# macOS only: isolated dummy Keychain lifecycle, no real credential or network
+```
+
+Additional checks and evaluation tools:
+
+```bash
+# macOS: isolated test using a dummy Keychain entry
 npm run test:credentials -- --host
+
+# Offline policy replay
 python3 scripts/evaluate-advice.py --policy-replay --split all
 ```
 
-Paid calibration is an explicit command:
+Live evaluation is opt-in and can generate provider charges. Refer to the [evaluation guide](docs/benchmark.md) before running it. Offline tests validate policy and integration behavior but do not establish live recommendation accuracy.
 
-```sh
-python3 scripts/evaluate-advice.py --live --split calibration --answers --budget-usd 5
-```
+## Documentation
 
-The soft budget covers reported Claude cost, excludes TypeSafe charges, and may be exceeded by an in-flight request. Review calibration before running held-out evaluation. Free-form correctness, code functionality and depth/polish require independent review; unreviewed answers never count as passes.
+| Guide | Description |
+| --- | --- |
+| [Installation](docs/INSTALL.md) | Complete setup, credential methods, and enterprise configuration |
+| [Agent setup](docs/AGENT_SETUP_PROMPT.md) | Copy-paste instructions for an installation agent |
+| [Security](SECURITY.md) | Draft data flow, credentials, and security guidance |
+| [Extending Model Pilot](docs/extending.md) | Model profiles, provider adapters, and extension points |
+| [Evaluation](docs/benchmark.md) | Methodology for testing suggestions and quality requirements |
+| [Validation](docs/validation.md) | Validation approach and evidence |
+| [Benchmark results](docs/benchmark-results.md) | Historical measurements and their limitations |
 
-## Enterprise and migration
+## Contributing
 
-Review TypeSafe's unfinished-draft data flow and use approved credentials and model access. Custom gateways and cloud providers need explicit `ANTHROPIC_DEFAULT_{HAIKU,SONNET,OPUS}_MODEL` mappings. Unknown model families, unavailable permission state, attachments and queued prompts fail closed. Follow [enterprise setup](docs/INSTALL.md#enterprise-deployment).
+Issues, bug reports, and pull requests are welcome. Please review [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a change. For vulnerabilities or sensitive reports, follow [SECURITY.md](SECURITY.md).
 
-0.6 removes automatic routing and retires the optional Haiku/local-only recommendation paths. `/route classifier off` means no new advice. Trace schema 2 separates suggested, accepted, dispatched and confirmed counts. See [migration and rollback](docs/migration-0.6.md); [v0.5.0](https://github.com/UtkarshDubeyGIT/claude-model-router-mod/releases/tag/v0.5.0) remains available.
+## License
+
+See [LICENSE](LICENSE) for license details.

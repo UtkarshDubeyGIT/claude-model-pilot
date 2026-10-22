@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 experimental — 2026-10-22
+
+- Explain silent advice directly in `/route status`: permission state, key presence without its value, current protection, context size and the last assessment reason. Add the same safe diagnostics to trace; diagnostic commands do not call Jev.
+- Make `/route check` print missing-key, abstention and policy reasons instead of a generic no-advice message.
+- Add first-run troubleshooting to the README and install guide, including unknown permission on fresh interactive terminals, ongoing-task protection and the context-cost heuristic.
+- Add four native regression tests. Recommendation thresholds, planning continuity and explicit acceptance are unchanged.
+
 ## 0.6.0 experimental — 2026-10-22
 
 - Replace optional automatic routing with pre-send advice and draft/task-bound explicit acceptance. Add composer buttons and accept/dismiss/check commands.

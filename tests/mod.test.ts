@@ -6,7 +6,7 @@ function host(on, options = {}) {
   on('command.register', () => ({ value: undefined }))
   on('session.model', () => ({ value: options.model ?? 'claude-opus-5-5' }))
   on('session.turns', () => ({ value: options.turns ?? 0 }))
-  on('session.usage', () => ({ value: { context: { tokens: 0, window: 200000 }, rateLimits: [], startedAt: 0 } }))
+  on('session.usage', () => ({ value: { context: { tokens: options.contextTokens ?? 0, window: 200000 }, rateLimits: [], startedAt: 0 } }))
   on('config.list', () => ({value: options.unknownEffort ? [] : [{key:'effortLevel',kind:'choice',label:'Effort',value:options.effort ?? 'high',provider:{kind:'engine'},isLocked:false}]}))
   on('session.start', () => ({ cwd: '/work' }))
   on('turn.start', ($, e) => ({ turnId: e.turnId }))
@@ -60,6 +60,38 @@ async function edit($,text){await $.prompt.edit({text:'',cursor:0,start:0,end:0,
 test('auto migrates and never authorizes requests',async($,on)=>{
  const seen=host(on);jev(on);await boot($);expect((await cmd($,'auto')).text).toContain('removed')
  await check($);await start($);await step($);expect(seen[0].model).toBe('claude-opus-5-5');expect((await trace($)).counters.dispatched).toBe(0)
+})
+test('status explains unknown startup permission without calling Jev',async($,on)=>{
+ host(on);const f=jev(on);await boot($,'')
+ const status=(await cmd($,'status')).text
+ expect(status).toContain('Permission state is unknown.')
+ expect(status).toContain('Key: present')
+ expect(status).toContain('first normal answer')
+ expect(f.calls()).toBe(0)
+ expect((await trace($)).diagnostics.permission).toBe('unknown')
+})
+test('status distinguishes ongoing task protection from provider failure',async($,on)=>{
+ host(on,{turns:4});const f=jev(on);await boot($)
+ const status=(await cmd($,'status')).text
+ expect(status).toContain('Ongoing task: preserve its model, effort and context.')
+ expect(status).toContain('Only after finishing this task')
+ expect(f.calls()).toBe(0)
+})
+test('check explains a missing key and diagnostics never expose credentials or draft',async($,on)=>{
+ host(on);const f=jev(on,'simple',{noKey:true});await boot($)
+ expect((await cmd($,'check '+TEXT)).text).toContain('missing-key')
+ expect((await cmd($,'status')).text).toContain('Key: missing')
+ expect((await cmd($,'trace')).text.includes(TEXT)).toBe(false)
+ expect(f.calls()).toBe(0)
+})
+test('status retains the last cost-comparison reason without requesting advice',async($,on)=>{
+ host(on,{contextTokens:67000});const f=jev(on)
+ await boot($);await check($)
+ const status=(await cmd($,'status')).text
+ expect(status).toContain('Context reload may outweigh savings')
+ expect(status).toContain('Context tokens: 67000')
+ expect(f.calls()).toBe(1)
+ expect((await trace($)).counters.suggested).toBe(0)
 })
 test('accepted draft applies throughout a tool loop and follow-ups',async($,on)=>{
  const seen=host(on);jev(on);await boot($);await accepted($);await start($);await step($);await step($,'t',1)

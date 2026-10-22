@@ -56,11 +56,13 @@ Inside Claude Code:
 /route profiles
 ```
 
+`/route status` makes no Jev request. It shows permission state, key presence (not authentication verification), current eligibility and the last assessment reason. `Provider: skipped` with zero classifier calls means assessment was protected, not that Jev recommended your model.
+
 Advice is enabled and Jev is the provider. **Eligible unfinished drafts go to TypeSafe after two seconds without editing**, whether or not you submit them. The mod stores no persistent drafts. Calls are separately billed. Use `/route off` to stop new assessment.
 
 Type a harmless standalone draft. When eligible and supported by confident evidence, a card offers **Use for this task / Dismiss**. Sending without acceptance keeps your current profile. Silence can mean the current profile fits, continuity protects it, or evidence is unavailable. Inspect `/route trace` for the distinction.
 
-The host must expose permission state first. Some hosts expose it only after the first answer. The mod stays quiet while it is unknown; after finishing that task, `/route new` starts a new independent task. Headless clients can explicitly assess with `/route check <prompt>`, accept the returned ID with `/route accept <id>`, then send the exact prompt. Do not issue `/route new` in the middle of work merely to force a suggestion.
+The host must expose permission state first. This includes a fresh interactive terminal on the tested host: the visible “auto mode on” footer does not establish permission state for the mod. Some hosts expose it only with the first normal answer. The mod stays quiet while it is unknown; after finishing that task, `/route new` starts a new independent task. Headless clients can explicitly assess with `/route check <prompt>`, accept the returned ID with `/route accept <id>`, then send the exact prompt. Do not issue `/route new` in the middle of work merely to force a suggestion.
 
 Accepted profiles are applied at dispatch, then retained for task follow-ups only after API model confirmation. Effort is the requested effort; provider-internal effort is not independently observable. Editing the draft or changing model, effort, mode or task boundary invalidates unconsumed acceptance. `/route auto` only explains this migration.
 
@@ -98,6 +100,9 @@ This loads the local checkout for that session. Use the correct path when starti
 | What you see | What to check |
 | --- | --- |
 | `/route` is missing | Confirm the plugin is enabled with `claude plugin list`; inspect `/plugin` errors; start a fresh session. |
+| `ongoing task protected`, zero classifier calls | Expected continuity protection. Finish the task; use `/route new` only for a genuinely independent task. |
+| `Permission state is unknown` | Wait for authoritative host lifecycle state, which may arrive with the first normal answer. After finishing that task, use `/route new`; it cannot bypass unknown state. |
+| Context reload may outweigh savings | The initial policy suppresses cheaper-profile suggestions above 8,000 context tokens, or with unmeasured non-fresh context. This is a conservative heuristic, not measured savings. Test separately in a low-context session; do not discard ongoing work to force advice. |
 | `missing-key` | Export the key before launching Claude from the same shell. Never print the value to debug it. |
 | HTTP error | Check the key, provider access and organization network policy. Share only the status code. |
 | Timeout or abstention | Claude keeps your selection. Inspect the provider state in `/route trace`; a failed call is not a model recommendation. |

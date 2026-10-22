@@ -24,6 +24,28 @@ function input(text) {
     planMode, activeTask, freshSession, contextTokens, attachments: attachments || queueProtected}
 }
 function contextKey() { return JSON.stringify([model,effort,permissionKnown,planMode,activeTask,pinned,advisor.task,contextTokens,freshSession,attachments,queueProtected]) }
+function assessmentSummary() {
+  const p=trace?.provider
+  if (!p) return 'No draft assessment yet.'
+  const provider=[p.status, p.reason, ...(p.reasons || [])].filter(Boolean).join('; ')
+  return [provider, trace?.decision?.reason, trace?.application==='unmapped-target'?'Target deployment mapping is missing.':null].filter(Boolean).join(' — ')
+}
+async function diagnostics($) {
+  let keyConfigured=null
+  try { const key=(await $.env.get('TYPESAFE_API_KEY'))?.trim();keyConfigured=Boolean(key&&!/[\r\n]/.test(key)) } catch {}
+  const eligibility=classificationEligibility(input(advisor.text))
+  const reason=mode==='off'?'Advice is off.':classifier!=='jev'?'Jev assessment is off.':eligibility.reason || (keyConfigured===false?'TypeSafe key is missing.':'Draft is eligible; confident evidence is still required.')
+  let nextStep='Pause on a standalone draft for two seconds. Advice is not guaranteed; inspect the last assessment below.'
+  if(mode==='off')nextStep='Use /route advise to enable advice.'
+  else if(classifier!=='jev')nextStep='Use /route classifier jev to enable assessment.'
+  else if(pinned)nextStep='Your manual model choice is pinned. Use /route unpin only if you want advice again; other protections still apply.'
+  else if(!permissionKnown)nextStep='This host may expose permission state only with the first normal answer. Finish that task, then use /route new for a genuinely independent task; the command cannot bypass unknown state.'
+  else if(planMode)nextStep='Keep the planning profile. Leaving plan mode alone does not end the task; /route new cannot override plan mode.'
+  else if(activeTask)nextStep='Only after finishing this task, use /route new for an independent task. Follow-ups and asides stay protected.'
+  else if(keyConfigured===false)nextStep='Export TYPESAFE_API_KEY privately in the launching shell, then restart Claude. Never paste the key into chat.'
+  return {permission:permissionKnown?permissionValue:'unknown',model,effort:effort??null,keyConfigured,
+    activeTask,pinned,contextTokens:Number.isFinite(contextTokens)?contextTokens:null,eligibility,reason,nextStep}
+}
 async function refresh($) {
   const selected = await $.session.model()
   // Read the live menu, never write config or infer effective effort from saved defaults.
@@ -219,13 +241,13 @@ export function register(on) {
   })
   on('command.run',{command:'route'},async($,e)=>{
     const raw=e.args.trim();const arg=raw.toLowerCase()
-    if(arg==='trace')return {text:JSON.stringify({schemaVersion:2,versions,trace,recommendation:advisor.record,counters:advisor.counters,classifierCalls,classifierTokens})}
+    if(arg==='trace')return {text:JSON.stringify({schemaVersion:2,versions,diagnostics:await diagnostics($),trace,recommendation:advisor.record,counters:advisor.counters,classifierCalls,classifierTokens})}
     if(arg==='profiles')return {text:JSON.stringify({schemaVersion:2,profileVersion:PROFILE_VERSION,profiles:PROFILES,modelIds:await loadModelIds($)})}
     if(arg==='auto')return {text:'Automatic routing was removed in 0.6. Use the suggestion’s “Use for this task” button or /route accept <id>. No request changes without individual acceptance.'}
     if(arg.startsWith('check ')){
       advisor.edit(raw.slice(6));await assess($)
       const r=advisor.record
-      return {text:r&&advisor.valid(r.id)&&r.acceptance==='suggested'?`${r.id}: ${r.proposed.model} / ${r.proposed.effort}. ${r.benefit} ${r.tradeoff} Use /route accept ${r.id} or /route dismiss ${r.id}; then send the exact checked prompt.`:'No actionable advice. See /route trace for evidence; silence does not prove optimality.'}
+      return {text:r&&advisor.valid(r.id)&&r.acceptance==='suggested'?`${r.id}: ${r.proposed.model} / ${r.proposed.effort}. ${r.benefit} ${r.tradeoff} Use /route accept ${r.id} or /route dismiss ${r.id}; then send the exact checked prompt.`:`No actionable advice. ${(await diagnostics($)).reason}\nLast assessment: ${assessmentSummary()}\nSee /route status for setup and protection details; silence does not prove optimality.`}
     }
     if(arg.startsWith('accept ')){
       const ok=await accept($,arg.slice(7))
@@ -250,7 +272,8 @@ export function register(on) {
     else if(['classifier jev','classifier on'].includes(arg)){classifier='jev';invalidate($)}
     else if(arg==='classifier haiku')return {text:'0.6 uses Jev for quality assessment. The legacy Haiku classifier is retired; use /route classifier jev or off.'}
     else if(arg&&arg!=='status')return {text:'Usage: /route [status|trace|profiles|check PROMPT|accept ID|dismiss ID|advise|off|pin|unpin|new|classifier jev|classifier off]'}
-    return {text:`Model Pilot 0.6 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
+    const d=await diagnostics($)
+    return {text:`Model Pilot 0.6.1 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'} (presence only, not authentication verified). Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
   })
   on('turn.start',async($,e,next)=>{
     if(e.agentId)return next(e)

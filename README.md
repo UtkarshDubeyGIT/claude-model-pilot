@@ -4,7 +4,7 @@
 
 Model Pilot recommends a better **quality–cost tradeoff** when there is enough evidence. It can suggest a smaller model, stronger reasoning, or a different effort on the same model. Speed is secondary. Reduced depth or polish may be acceptable; correctness, safety, required functionality and output format remain requirements.
 
-**0.6.0 experimental · MIT · tested with Claude Code 2.1.306.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
+**0.6.1 experimental · MIT · tested with Claude Code 2.1.306.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
 
 ## Install
 
@@ -25,6 +25,19 @@ claude
 **Advice is enabled by default. Eligible unfinished drafts are sent to TypeSafe after you stop editing, even if you never send them to Claude.** TypeSafe charges are separate. The mod keeps drafts and cached assessments only in session memory; it does not write prompt logs. `/route off` stops new assessments. Never paste a key into chat or a command argument.
 
 [Full installation guide, including Bash](docs/INSTALL.md) · [Copy-paste setup prompt for your agent](docs/AGENT_SETUP_PROMPT.md) · [Security disclosure](SECURITY.md)
+
+## Verify that advice can run
+
+Run `/route status` in Claude after installation. It reports the current protection, whether the key is present (not whether authentication succeeded), permission state, and the last assessment reason. No API call is made by this command.
+
+- **Ongoing task protected:** Jev is deliberately skipped. Finish that task, then use `/route new` only when starting an independent task. Follow-ups, asides and related implementation remain protected.
+- **Permission state is unknown:** this also occurs in a fresh interactive terminal on the tested host, even when its footer says “auto mode on.” The mod waits for authoritative lifecycle state, which may arrive only with the first normal answer. After finishing that task, use `/route new`. Do not bypass the guard.
+- **Key missing:** restart Claude from the shell where you exported the key.
+- **No card after an eligible assessment:** the current profile may fit, Jev may abstain, or context reload may outweigh savings. `/route trace` distinguishes these. A suggestion is not a loading indicator.
+
+For a small test, use a separate, low-context session. After permission state is known and the initial task is complete, run `/route new`, type `What does HTTP stand for?`, and pause without sending. A card requires a suitable current profile and confident live Jev evidence; it is not guaranteed. `/route check What does HTTP stand for?` explicitly assesses the same draft and prints the outcome. Both draft assessment and `/route check` use TypeSafe and are separately billed.
+
+Claude’s **“auto mode on” footer controls tool permissions**. It does not mean Model Pilot automatically changes models.
 
 ## How it feels
 

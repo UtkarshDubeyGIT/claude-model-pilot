@@ -1,3 +1,16 @@
+# Validation record — 0.6.1 experimental
+
+22 October 2026, Claude Code **2.1.306**. This patch improves diagnosis and installation instructions; it does not relax recommendation gates or task protection.
+
+- 85 portable tests, 44 native mod tests and 31 Python tests passed (160 total). Four new native tests first reproduced missing explanations for unknown permission, ongoing tasks, missing keys and context-cost suppression, then passed with the patch.
+- Strict plugin validation passed with the existing optional listing-icon warning.
+- Real-host synthetic integration passed all four scenarios (seven answer turns), including protected Opus planning.
+- An isolated interactive terminal reproduced silent first-draft assessment with `Permission state is unknown`. The patched status exposed the reason without a Jev call. After a normal synthetic answer and an explicit new task boundary, typing a simple draft showed the Haiku/low suggestion and both buttons.
+
+All provider/model responses in these checks were synthetic. The new diagnostics report key presence only, not successful authentication. Live Jev quality calibration remains outstanding. No private drafts or raw session logs are included here.
+
+---
+
 # Validation record — 0.6.0 experimental
 
 22 October 2026, Claude Code **2.1.306**. Synthetic fixtures use an isolated temporary configuration, a loopback model API and dummy credentials; no paid inference was used for this release validation.

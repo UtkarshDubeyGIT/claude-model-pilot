@@ -1,7 +1,7 @@
 # Give this prompt to your agent
 
 ```text
-Install Model Pilot 0.6 experimental from:
+Install Model Pilot 0.6.1 experimental from:
 https://github.com/UtkarshDubeyGIT/claude-model-router-mod
 
 Read README.md, docs/INSTALL.md and SECURITY.md. Inspect the plugin manifests
@@ -23,7 +23,10 @@ chat, or recover it from another process. If missing, show the hidden-input
 command for my shell and let me enter it privately. Another terminal's export
 does not automatically reach your command runner.
 
-Verify plugin list and /route status where available. Explain /route check,
+Verify plugin list and /route status where available. Report key presence,
+permission state, current eligibility and last assessment reason. Do not
+promise a recommendation for every prompt. Zero calls with an ongoing task
+means continuity protection; use /route new only after that task is finished. Explain /route check,
 /route new, /route pin, /route unpin, /route off, /route profiles and /route trace.
 Planning and related implementation/follow-ups/asides must preserve the task's
 model and effort. Leaving plan mode is not a task boundary. Unknown permission

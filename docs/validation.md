@@ -1,3 +1,19 @@
+# Validation record — 0.7.0 experimental
+
+22 October 2026, macOS and Claude Code **2.1.308**. Persistent credentials, key lifecycle controls and terminal mascot; recommendation thresholds remain unchanged.
+
+- **191 local tests passed:** 90 portable Node tests, 62 native mod tests, 39 Python tests. Credential coverage includes precedence, malformed overrides, redaction, authentication rejection, unavailable storage, explicit test/delete confirmation, single-flight testing, rotation invalidating unused consent, and rotation preserving applied profiles through tool loops/follow-ups. Existing Opus planning chains across all five efforts remain covered.
+- **Four real-host synthetic scenarios passed:** simple, routine, complex, and planning (seven answer turns, plus initialization). These validate request application and protection, not live recommendation quality.
+- **Real macOS Keychain lifecycle passed:** save, reload in a fresh process, replace, delete and idempotent delete, using a unique disposable entry and synthetic values. No real key was read. No plaintext fallback was implemented.
+- **Saved-key end-to-end check passed:** an isolated Claude process with no TypeSafe environment variable loaded a dummy Keychain entry through the real Python helper; synthetic Jev assessment and explicit advice acceptance worked. The temporary plugin copy used a unique test service, which was deleted afterward.
+- **Interactive composer checked:** orange terminal mascot and key state appeared alongside the model; key status/setup commands worked without model requests. Strict validation passed with the existing optional directory-listing icon warning.
+
+Two isolated tests of the host's generic sensitive configuration found a plaintext `.credentials.json` fallback under restricted Keychain access and an empty-value update that did not clear a saved value. The shipped adapter does not use that host storage flow. Tests make no guarantee about other Claude versions or other operating systems.
+
+Persistent storage currently supports macOS only (Python 3 required). Windows/Linux and enterprise secret-manager users retain environment injection. Live Jev calibration of the current rubric remains outstanding, so this is an experimental release, not a claim of proven savings or production-wide recommendation quality. [Published evidence](../benchmarks/results/2026-10-22-credentials-0.7.0.json) contains only synthetic aggregate results.
+
+---
+
 # Validation record — 0.6.3 experimental
 
 22 October 2026, Claude Code **2.1.306**. Visual-only update: segmented status row, emoji icons, muted dividers, bold model name and narrow-terminal wrapping. All 165 existing automated tests passed (85 portable, 49 native, 31 Python); native display expectations were updated for the segmented row on terminal and desktop. Strict validation passed with the existing optional icon warning. The isolated interactive terminal rendered the styled startup line with zero model requests. Recommendation policy and request application are unchanged; the prior synthetic integration results below are from 0.6.2, not a new live-provider test.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 experimental — 2026-10-22
+
+- Add persistent TypeSafe keys through a Python 3 macOS Keychain adapter: hidden terminal setup, explicit import from the user's shell, replacement, and verified deletion. No plaintext fallback. Explicit environment overrides retain priority; Windows/Linux continue to support environment injection.
+- Add `/route key setup`, `replace`, `status`, `test`, and `remove`. Testing and removal explain their effects before a `confirm` command. Authentication tests send only fixed synthetic input and share the request/rate limits; no advice is accepted and no model is changed.
+- Track key source and unverified/verified/rejected states without serializing secrets. Suppress automatic retry after authentication rejection. Credential changes invalidate unconsumed advice and authentication evidence while preserving protected task profiles.
+- Add an orange block-style terminal mascot beside the model and a compact key-state indicator. Presentation version 4; recommendation gates and continuity protections are unchanged.
+- Retain the experimental designation: synthetic safety/integration tests do not establish live recommendation accuracy. Version 0.6.3 remains available for rollback; older versions require an environment export.
+
 ## 0.6.3 experimental — 2026-10-22
 
 - Style the persistent composer line with a compass emoji, bold model name, muted effort/help text and dividers, plus state-specific icons and colors. Match the compact visual rhythm of Token Weather while preserving its content.

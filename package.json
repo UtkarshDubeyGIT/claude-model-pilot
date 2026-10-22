@@ -1,6 +1,6 @@
 {
   "name": "model-pilot",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "Continuity-aware model and reasoning advisor for Claude Code",
@@ -18,7 +18,8 @@
     "test:eval": "python3 -m unittest discover -s tests -p \"test_*.py\"",
     "test:host": "python3 scripts/live-eval.py --offline",
     "benchmark": "python3 scripts/benchmark.py",
-    "test:advice": "python3 scripts/evaluate-advice.py --policy-replay --split all"
+    "test:advice": "python3 scripts/evaluate-advice.py --policy-replay --split all",
+    "test:credentials": "python3 scripts/credential-smoke.py"
   },
   "engines": {
     "node": ">=20"

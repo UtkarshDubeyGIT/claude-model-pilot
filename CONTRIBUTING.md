@@ -4,7 +4,7 @@ Model Pilot prioritizes task quality, user control and continuity ahead of price
 
 ## Development
 
-Clone the repository and work on a branch. The mod has no runtime dependencies or build step. Node 20+ runs the portable tests; Python 3 runs the evaluation tests. Claude Code 2.1.306 is the tested host version.
+Clone the repository and work on a branch. The mod has no npm dependencies or build step. Saved macOS keys require Python 3 and an accessible Keychain; environment-only use does not. Node 20+ runs the portable tests; Python 3 runs the evaluation tests. Claude Code 2.1.308 is the tested host version.
 
 ```sh
 git clone https://github.com/UtkarshDubeyGIT/claude-model-router-mod.git

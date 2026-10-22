@@ -1,6 +1,6 @@
 /** Session-memory consent ledger. Never serialize this object (it holds a draft).
  * Only `record` and counters are safe diagnostics. No acceptance survives reload. */
-export const PRESENTATION_VERSION = 3
+export const PRESENTATION_VERSION = 4
 export class Advisor {
   constructor() {
     this.text = ''; this.revision = 0; this.task = 0; this.serial = 0

@@ -1,3 +1,10 @@
+# Updating to 0.7 experimental
+
+- Existing environment exports continue to work and take priority. macOS users can opt into persistent Keychain storage through `/route key setup`; updates do not move or recover any existing secret automatically.
+- New key-management commands do not authorize model changes. Key removal is local and shared across projects; revoke a compromised key at TypeSafe separately. Remove the saved entry before uninstalling if desired.
+- Windows/Linux remain environment-only. Python 3 is required for macOS persistence.
+- [v0.6.3](https://github.com/UtkarshDubeyGIT/claude-model-router-mod/releases/tag/v0.6.3) remains available for rollback with the same explicit-acceptance behavior. It cannot read the new Keychain entry; export the key privately if reverting. Do not load two copies simultaneously.
+
 # Migrating to 0.6 experimental
 
 - `/route auto` no longer enables anything. It explains explicit acceptance.

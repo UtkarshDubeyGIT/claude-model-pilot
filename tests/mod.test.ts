@@ -1,6 +1,7 @@
 import { expect, test, mock } from 'claude-code/testing'
 const TEXT = 'What does HTTP stand for?'
 function host(on, options = {}) {
+  if(!options.customProcess)on('process.run',()=>({value:{exitCode:0,stdout:JSON.stringify({state:options.savedKey?'present':'missing',key:options.savedKey}),stderr:''}}))
   const seen = []
   on('command.run', () => ({ text: 'unhandled' }))
   on('command.register', () => ({ value: undefined }))
@@ -63,6 +64,109 @@ async function expectBand($,text,props={},surface='terminal'){
  expect(await ui.find({type:'Text',text:'Other mod'})).toBeDefined()
  await ui.unmount()
 }
+
+test('saved sensitive key supplies Jev without an environment export', async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});const f=jev(on,'simple',{noKey:true});await boot($)
+ const status=(await cmd($,'key status')).text
+ expect(status).toContain('saved');expect(status).toContain('unverified')
+ await check($);expect(f.calls()).toBe(1)
+ expect((await cmd($,'key status')).text).toContain('verified')
+ expect((await cmd($,'trace')).text.includes('saved-fixture-key')).toBe(false)
+})
+test('environment overrides saved key and never exposes either', async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});jev(on);await boot($)
+ expect((await cmd($,'key status')).text).toContain('environment')
+ expect((await cmd($,'key status')).text).toContain('priority')
+ const t=(await cmd($,'trace')).text
+ expect(t.includes('saved-fixture-key')).toBe(false);expect(t.includes('test-key')).toBe(false)
+})
+test('key setup and test guidance never send a draft or grant acceptance',async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});const f=jev(on);await boot($,'plan')
+ expect((await cmd($,'key setup')).text).toContain('keychain.py')
+ expect((await cmd($,'key test')).text).toContain('billable')
+ expect(f.calls()).toBe(0);expect((await trace($)).counters.accepted).toBe(0)
+})
+test('confirmed key test uses synthetic data and leaves planning protected',async($,on)=>{
+ const seen=host(on,{savedKey:'saved-fixture-key'});const f=jev(on);await boot($,'plan')
+ await edit($,'Private draft that must not be sent by a credential test')
+ const r=await cmd($,'key test confirm');expect(r.text).toContain('verified');expect(f.calls()).toBe(1)
+ await start($,'Continue plan','t','plan');await step($)
+ expect(seen[0].model).toBe('claude-opus-5-5');expect(seen[0].effort).toBe('high')
+ expect((await trace($)).counters.dispatched).toBe(0)
+})
+test('remove clears only saved credential after confirmed successful host write', async($,on)=>{
+ host(on,{customProcess:true});const f=jev(on,'simple',{noKey:true});let writes=0
+ on('process.run',($,e)=>{
+  if(e.argv.includes('read-for-plugin'))return {value:{exitCode:0,stdout:JSON.stringify({state:writes?'missing':'present',...(writes?{}:{key:'saved-fixture-key'})}),stderr:''}}
+  writes++;expect(e.argv.at(-1)).toBe('remove');expect(e.argv.join(' ').includes('saved-fixture-key')).toBe(false)
+  return {value:{exitCode:0,stdout:'{"state":"removed"}',stderr:''}}
+ })
+ await boot($);await cmd($,'key remove');expect(writes).toBe(0)
+ expect((await cmd($,'key remove confirm')).text).toContain('removed')
+ expect((await cmd($,'key status')).text).toContain('missing')
+ await check($);expect(f.calls()).toBe(0);expect(writes).toBe(1)
+})
+test('failed removal never claims success or leaks host error output', async($,on)=>{
+ host(on,{customProcess:true});jev(on,'simple',{noKey:true})
+ on('process.run',($,e)=>e.argv.includes('read-for-plugin')?{value:{exitCode:0,stdout:'{"state":"present","key":"saved-fixture-key"}',stderr:''}}:{value:{exitCode:1,stdout:'saved-fixture-key',stderr:'private-error'}})
+ await boot($);const r=(await cmd($,'key remove confirm')).text
+ expect(r).toContain('could not');expect(r.includes('private-error')).toBe(false);expect(r.includes('saved-fixture-key')).toBe(false)
+ expect((await cmd($,'key status')).text).toContain('saved')
+})
+test('rejected authentication is visible and suppresses automatic retries',async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});mock.env(on,{TYPESAFE_API_KEY:'bad-fixture'});const clock=mock.clock(on);let calls=0
+ on('http.fetch',()=>{calls++;return {value:{ok:false,status:401,text:'private-error-with-bad-fixture',headers:{}}}})
+ await boot($);await check($)
+ expect((await cmd($,'key status')).text).toContain('rejected')
+ await clock.advance(10000);await cmd($,'check Define DNS')
+ expect(calls).toBe(1)
+ await expectBand($,/key rejected/)
+ expect((await cmd($,'trace')).text.includes('bad-fixture')).toBe(false)
+})
+test('invalid environment key fails closed rather than using saved account', async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});const f=jev(on,'simple',{env:{TYPESAFE_API_KEY:'bad\nkey'}});await boot($)
+ expect((await cmd($,'key status')).text).toContain('invalid')
+ await check($);expect(f.calls()).toBe(0)
+})
+test('saved key rotation clears consent and verification without changing a request',async($,on)=>{
+ const seen=host(on,{customProcess:true});const f=jev(on,'simple',{noKey:true});let value='first-fixture'
+ on('process.run',()=>({value:{exitCode:0,stdout:JSON.stringify({state:'present',key:value}),stderr:''}}))
+ await boot($);await accepted($)
+ value='replacement-fixture'
+ expect((await cmd($,'key status')).text).toContain('unverified')
+ await start($);await step($)
+ expect(seen[0].model).toBe('claude-opus-5-5');expect(seen[0].effort).toBe('high')
+ expect((await trace($)).counters.dispatched).toBe(0);expect(f.calls()).toBe(1)
+})
+test('key rotation preserves an already applied profile through a tool loop and follow-up',async($,on)=>{
+ const seen=host(on,{customProcess:true});jev(on,'simple',{noKey:true});let value='first-fixture'
+ on('process.run',()=>({value:{exitCode:0,stdout:JSON.stringify({state:'present',key:value}),stderr:''}}))
+ await boot($);await accepted($);await start($);await step($)
+ value='replacement-fixture';await cmd($,'key status');await step($,'t',1)
+ await $.turn.complete({turnId:'t',answer:'ok',isAborted:false});await start($,'Explain that','follow');await step($,'follow')
+ expect(seen.map(r=>r.model)).toEqual(['claude-haiku-5-5','claude-haiku-5-5','claude-haiku-5-5'])
+ expect(seen.map(r=>r.effort)).toEqual(['low','low','low'])
+})
+test('unavailable Keychain never turns into a plaintext read or a provider call',async($,on)=>{
+ host(on,{customProcess:true});const f=jev(on,'simple',{noKey:true})
+ on('process.run',()=>({value:{exitCode:0,stdout:'{"state":"unavailable"}',stderr:''}}))
+ await boot($);expect((await cmd($,'key status')).text).toContain('unavailable')
+ await check($);expect(f.calls()).toBe(0)
+})
+test('key test checks no user draft and refuses overlapping requests',async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});mock.env(on,{TYPESAFE_API_KEY:'test-key'});const clock=mock.clock(on);let calls=0
+ on('http.fetch',async($,e)=>{calls++;expect(JSON.parse(e.init.body).state.prompt).toBe('What does HTTP stand for?');await clock.sleep(2500);return {value:{ok:true,status:200,text:'{}',headers:{}}}})
+ await boot($,'plan');await edit($,'TOP SECRET DRAFT')
+ const pendingTest=cmd($,'key test confirm');await clock.advance(1600);await pendingTest
+ expect((await cmd($,'key test confirm')).text).toContain('already running')
+ expect(calls).toBe(1)
+})
+test('model band includes an orange terminal mascot',async($,on)=>{
+ host(on,{savedKey:'saved-fixture-key'});jev(on);await boot($)
+ const ui=await $.ui.mount({plugin:'model-pilot',surface:'terminal',component:'AbovePrompt',props:{}})
+ expect(await ui.find({type:'Text',text:'▐▛███▜▌'})).toBeDefined()
+ await ui.unmount()
+})
 
 test('persistent band explains startup without a draft or provider call',async($,on)=>{
  host(on,{model:'claude-sonnet-5-5',unknownEffort:true});const f=jev(on);await boot($,'')

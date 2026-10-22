@@ -7,7 +7,7 @@ The pipeline is **Jev assessment → task protection → quality/cost comparison
 | Jev questions and typed evidence | `src/jev.js` | question 3; gates 1 |
 | Task protection | `src/policy.js` | 2 |
 | Quality/cost comparison | `src/policy.js` | 2 |
-| Consent ledger and presentation | `src/advisor.js`, `hooks/register.js` | 1 |
+| Consent ledger and presentation | `src/advisor.js`, `hooks/register.js` | 4 |
 | Initial candidate mappings | `src/profiles.js` | 1 |
 | Trace | `/route trace` | schema 2 |
 
@@ -38,3 +38,9 @@ A first answer may be necessary for a host to emit authoritative permission stat
 Trace schema 2 separates suggested and accepted records from dispatched and model-confirmed turns. Follow-ups can produce more confirmed turns than acceptance records. Model identity confirmation is separate from effective effort and answer quality.
 
 Run portable, native, Python grader and real-host synthetic checks. The 48-case corpus has 24 calibration and 24 held-out cases across six categories. Labels accept multiple adequate profiles and distinguish useful advice from justified silence. Offline label replay tests the policy, not Jev. Paid `evaluate-advice.py --live` evaluates actual Jev predictions; `--answers` buys paired baseline/candidate answers. Review mandatory quality and depth separately; never report unreviewed free-form answers as passing. Do not tune thresholds against held-out labels or to maximize switch counts.
+
+## Credentials
+
+`src/credentials.js` owns environment precedence, private session values, generation-bound authentication evidence, and sanitized status. `scripts/keychain.py` implements macOS storage with the Security framework, fixed service/account, direct replacement and verified deletion. Secrets never appear in process arguments. Only the private `read-for-plugin` IPC response contains the saved key; production logs/traces never include that response. Python 3 is required only for this adapter.
+
+To add Windows Credential Manager or Linux Secret Service, preserve `present`/`missing`/`unsupported`/`unavailable` outcomes and the same read/set/remove interface. Do not add a file fallback. Test save, fresh-process reload, replace, unavailable/locked storage, verified deletion, redaction and stale verification. The UI uses status only; rendering must never read credentials or call a provider. Provider-specific auth test inputs and storage identities must remain separate from recommendation policy.

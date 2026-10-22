@@ -1,7 +1,7 @@
 # Give this prompt to your agent
 
 ```text
-Install Model Pilot 0.6.3 experimental from:
+Install Model Pilot 0.7.0 experimental from:
 https://github.com/UtkarshDubeyGIT/claude-model-router-mod
 
 Read README.md, docs/INSTALL.md and SECURITY.md. Inspect the plugin manifests
@@ -17,11 +17,17 @@ Use for this task / Dismiss and /route accept ID /route dismiss ID are the
 controls. Speed is secondary to quality and cost. Never weaken mandatory
 correctness, safety, functionality or required formatting to save money.
 
-Use TYPESAFE_API_KEY from the shell launching Claude. Check presence only;
-never print it, put it in arguments, save it in the repository, ask for it in
-chat, or recover it from another process. If missing, show the hidden-input
-command for my shell and let me enter it privately. Another terminal's export
-does not automatically reach your command runner.
+For persistent keys on macOS, explain /route key setup. Let me run the
+keychain.py set helper myself in a separate terminal and enter the key at its
+hidden prompt. Python 3 and an accessible macOS Keychain are required; there
+is no plaintext fallback. An existing shell export can be saved with the
+helper's import-env action, run by me in that shell. Never run the internal
+read-for-plugin action for inspection: its output is secret IPC.
+On other platforms or for enterprise injection use TYPESAFE_API_KEY. It takes
+priority over any saved key. Never print a key, put it in arguments, save it
+in the repository, ask for it in chat, or recover it from another process.
+Explain /route key status, replace, test and remove. A test requires explicit
+confirmation and may be billable. Deletion is local, not provider revocation.
 
 Verify plugin list, the persistent Model Pilot line above the composer, and
 /route status where available. The line makes no provider calls; Claude surveys

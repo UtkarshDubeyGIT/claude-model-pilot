@@ -1,6 +1,6 @@
 # Install and use Model Pilot
 
-Use a current Claude Code CLI; **2.1.306** is the tested version. Native mods require **2.1.287 or later**, but older host versions have not been validated for this project. Check with `claude --version`. The runtime needs no npm install, build step or separate proxy. See [Claude's mod guide](https://code.claude.com/docs/en/plugins/mods/create).
+Use a current Claude Code CLI; **2.1.308** is the tested version. Native mods require **2.1.287 or later**, but older host versions have not been validated for this project. Check with `claude --version`. The runtime needs no npm install, build step or separate proxy. See [Claude's mod guide](https://code.claude.com/docs/en/plugins/mods/create).
 
 ## Install from GitHub
 
@@ -23,7 +23,28 @@ The interactive installer lets you select scope. User scope is available across 
 
 ## Set the TypeSafe key
 
-Create a key in the [TypeSafe console](https://console.typesafe.ai). Enter it in a terminal without putting it in shell history. Choose the block for your shell.
+Create a key in the [TypeSafe console](https://console.typesafe.ai).
+
+### Persistent setup on macOS (recommended)
+
+Run `/route key setup` in Claude. Copy its `python3 .../scripts/keychain.py set` command into a **separate terminal**, then type the key at the hidden prompt. Never pass it as a command argument or paste it into chat. Python 3 is required. macOS may ask to allow Keychain access during setup; background reads do not open authorization dialogs.
+
+Use `/route key status` afterward. The mod reads the saved key on the next credential check, including in new sessions. Keys are scoped to your macOS user across all Model Pilot installations/projects, under service `ai.model-pilot.typesafe`, account `default`. Plugin updates keep the entry.
+
+If you already exported the key in that terminal, use the same helper command with `import-env` instead of `set`. This explicitly saves the shell's `TYPESAFE_API_KEY` without printing it or adding it to command history. Do not ask an agent to retrieve it from another process.
+
+- **Replace:** `/route key replace` shows the setup command again. Saving overwrites the same Keychain entry; `/route key status` reloads it and clears previous authentication evidence and unconsumed advice. The protected task profile stays intact.
+- **Verify:** `/route key test` explains the request. `/route key test confirm` sends one fixed synthetic question to TypeSafe, which may be billable. No draft/history is sent and no recommendation is accepted. It shares the single-flight/ten-second rate limit. A successful normal Jev request also verifies authentication for that session.
+- **Remove:** `/route key remove`, then `/route key remove confirm`, deletes this entry and verifies deletion. It does not revoke the key at TypeSafe, unset an environment override, or recall requests already sent. Other sessions reload on their next credential check. Uninstalling the plugin does not remove this shared entry; delete it before uninstalling if desired.
+- **Locked/denied Keychain or missing Python:** the status reports unavailable; unlock/authorize through the terminal helper and retry. There is **no plaintext fallback**.
+
+The mod reads only its own Keychain entry. It does not use Claude's generic sensitive-plugin storage: isolated host tests found plaintext fallback when Keychain was unavailable and empty-value clearing that did not remove a saved credential. The dedicated adapter avoids those behaviors.
+
+### Environment and enterprise setup (all platforms)
+
+An explicitly supplied `TYPESAFE_API_KEY` takes priority over a saved key. An invalid nonempty override fails closed rather than silently using a different account. To use the saved key instead, unset the variable and restart Claude from that shell. Windows/Linux currently use environment injection; native credential-store adapters for those platforms are not shipped.
+
+Enter it in a terminal without putting it in shell history. Choose the block for your shell.
 
 **zsh:**
 
@@ -56,7 +77,7 @@ Inside Claude Code:
 /route profiles
 ```
 
-`/route status` makes no Jev request. It shows permission state, key presence (not authentication verification), current eligibility and the last assessment reason. `Provider: skipped` with zero classifier calls means assessment was protected, not that Jev recommended your model.
+`/route status` makes no Jev request. It shows permission state, credential source and last authentication state, current eligibility and the last assessment reason. `Provider: skipped` with zero classifier calls means assessment was protected, not that Jev recommended your model.
 
 Advice is enabled and Jev is the provider. **Eligible unfinished drafts go to TypeSafe after two seconds without editing**, whether or not you submit them. The mod stores no persistent drafts. Calls are separately billed. Use `/route off` to stop new assessment.
 

@@ -113,3 +113,9 @@ python3 scripts/benchmark.py --rescore evals/your-run.json
 ```
 
 This writes separate `.rescored.json` and `.rescored.md` files, preserves the original answers and scores, and records the source SHA-256. It verifies the source corpus/catalog fingerprint first and refuses to overwrite an existing derived result. Published aggregate evidence contains no raw session logs, local paths or identifiers. See [the October 2026 results](benchmark-results.md).
+
+## Credential lifecycle integration (0.7)
+
+On macOS, `npm run test:credentials -- --host` uses a unique disposable Keychain entry, synthetic key, temporary plugin/configuration and local mock API to test persistence, replacement, deletion and the saved-key-to-Claude path. It makes no paid requests and never reads the real Model Pilot entry. Keychain denial fails the test; it must not fall back to a file.
+
+Paid benchmark scripts still require `TYPESAFE_API_KEY` in their launching shell. Saving a key for the mod does not export it into your shell or automatically authorize paid calibration. Never inspect the internal `read-for-plugin` helper output to recover it.

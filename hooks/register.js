@@ -3,6 +3,7 @@ import { reportedClassifierTokens } from '../src/classification.js'
 import { MODEL_IDS, PROFILES, PROFILE_VERSION, resolveTarget } from '../src/profiles.js'
 import { jevRequest, evaluateJev, JEV_QUESTION_VERSION } from '../src/jev.js'
 import { Advisor, PRESENTATION_VERSION } from '../src/advisor.js'
+import { Credentials } from '../src/credentials.js'
 
 const advisor = new Advisor()
 let mode = 'advise', classifier = 'jev', pinned = false
@@ -15,11 +16,42 @@ let attachments = false, queueProtected = false, pending = null, submitted = nul
 let trace = null, classifierCalls = 0, classifierTokens = 0
 let assessmentRevision = -1, assessmentPhase = null
 const cache = new Map() // Bounded, session-only; never serialized.
+let credentials = new Credentials(), credentialGeneration = 0
+const shellQuote = value => "'"+value.replace(/'/g,"'\\''")+"'"
+function keySetup($) { return `In a separate terminal, run: python3 ${shellQuote($.plugin.root+'/scripts/keychain.py')} set\nEnter the key at its hidden prompt. macOS Keychain only; no plaintext fallback. Then use /route key status to reload it. Python 3 is required for saved keys. Environment overrides take priority. Never enter the key in chat. To save an existing shell export, replace set with import-env.` }
+async function savedCredential($) {
+  try {
+    const r=await $.process.run(['python3',$.plugin.root+'/scripts/keychain.py','read-for-plugin'],{timeoutMs:3000})
+    if(r.exitCode!==0||r.stdout.length>8192)return {state:'unavailable'}
+    const value=JSON.parse(r.stdout)
+    if(!['present','missing','unsupported','unavailable'].includes(value.state))return {state:'unavailable'}
+    return value
+  } catch {return {state:'unavailable'}}
+}
+async function resolveCredential($) {
+  const value = await credentials.resolve(() => $.env.get('TYPESAFE_API_KEY'),()=>savedCredential($))
+  if (credentialGeneration && value.generation !== credentialGeneration) {
+    cache.clear(); invalidateCredentialAdvice($)
+  }
+  credentialGeneration = value.generation
+  return value
+}
+function keySummary() {
+  const k=credentials.status()
+  return `TypeSafe key: ${k.state}; source: ${k.source==='saved'?'saved macOS Keychain':k.source}.${k.source==='environment'?' Environment takes priority over saved keys.':''} ${k.state==='verified'?'Authentication succeeded in this session; future access can change.':'Presence alone does not verify authentication.'}`
+}
 const versions = { assessment: JEV_QUESTION_VERSION, protection: PROTECTION_VERSION, comparison: COMPARISON_VERSION, presentation: PRESENTATION_VERSION, profiles: PROFILE_VERSION }
 const validEffort = value => ['low','medium','high','xhigh','max'].includes(value)
 const sameModel = (actual, expected) => actual === expected || (['haiku','sonnet','opus'].includes(expected) && family(actual) === expected)
 const render = $ => { try { $.ui.invalidate('ui.render') } catch {} }
 function invalidate($, newTask = false) { timer?.cancel(); advisor.invalidate(newTask); submitted = null; if(pending)pending.profile=null; render($) }
+function invalidateCredentialAdvice($) {
+  timer?.cancel();advisor.invalidate();submitted=null
+  // Authentication for Jev is independent of a model request already underway.
+  // Expire unconsumed consent, but preserve applied profiles through tool loops.
+  if(pending&&!pending.attempted)pending.profile=null
+  render($)
+}
 function input(text) {
   return {text, model: sticky?.model || model, effort: sticky?.effort ?? effort, pinned, permissionKnown,
     planMode, activeTask, freshSession, contextTokens, attachments: attachments || queueProtected}
@@ -41,6 +73,7 @@ function bandStatus() {
   if(assessmentPhase)return assessmentPhase
   const p=trace?.provider
   if(p?.status==='missing-key')return 'TypeSafe key missing'
+  if(p?.status==='authentication-rejected')return 'TypeSafe key rejected'
   if(p?.status==='abstained')return 'insufficient evidence'
   if(['timeout-or-network-error','http-error','invalid-response'].includes(p?.status))return 'Jev unavailable'
   if(trace?.application==='unmapped-target')return 'target mapping missing'
@@ -55,10 +88,12 @@ function assessmentSummary() {
   return [provider, trace?.decision?.reason, trace?.application==='unmapped-target'?'Target deployment mapping is missing.':null].filter(Boolean).join(' — ')
 }
 async function diagnostics($) {
-  let keyConfigured=null
-  try { const key=(await $.env.get('TYPESAFE_API_KEY'))?.trim();keyConfigured=Boolean(key&&!/[\r\n]/.test(key)) } catch {}
+  await resolveCredential($)
+  const credential=credentials.status()
+  const keyConfigured=credential.state==='unavailable'?null:credential.present
   const eligibility=classificationEligibility(input(advisor.text))
-  const reason=mode==='off'?'Advice is off.':classifier!=='jev'?'Jev assessment is off.':eligibility.reason || (keyConfigured===false?'TypeSafe key is missing.':'Draft is eligible; confident evidence is still required.')
+  const keyReason={missing:'TypeSafe key is missing.',invalid:'The configured TypeSafe key has an invalid format.',rejected:'TypeSafe rejected authentication. Replace the key or explicitly retry its test.',unavailable:'Credential access is unavailable. Check Python 3 and macOS Keychain access.',unsupported:'Saved credentials are not supported on this platform. Supply TYPESAFE_API_KEY through your environment.'}[credential.state]
+  const reason=mode==='off'?'Advice is off.':classifier!=='jev'?'Jev assessment is off.':eligibility.reason || keyReason || 'Draft is eligible; confident evidence is still required.'
   let nextStep='Pause on a standalone draft for two seconds. Advice is not guaranteed; inspect the last assessment below.'
   if(mode==='off')nextStep='Use /route advise to enable advice.'
   else if(classifier!=='jev')nextStep='Use /route classifier jev to enable assessment.'
@@ -66,8 +101,8 @@ async function diagnostics($) {
   else if(!permissionKnown)nextStep='This host may expose permission state only with the first normal answer. Finish that task, then use /route new for a genuinely independent task; the command cannot bypass unknown state.'
   else if(planMode)nextStep='Keep the planning profile. Leaving plan mode alone does not end the task; /route new cannot override plan mode.'
   else if(activeTask)nextStep='Only after finishing this task, use /route new for an independent task. Follow-ups and asides stay protected.'
-  else if(keyConfigured===false)nextStep='Export TYPESAFE_API_KEY privately in the launching shell, then restart Claude. Never paste the key into chat.'
-  return {permission:permissionKnown?permissionValue:'unknown',model,effort:effort??null,keyConfigured,
+  else if(keyConfigured===false)nextStep='Use /route key setup to save a key, or supply TYPESAFE_API_KEY in the launching shell. Never paste the key into chat.'
+  return {permission:permissionKnown?permissionValue:'unknown',model,effort:effort??null,keyConfigured,credential,
     activeTask,pinned,contextTokens:Number.isFinite(contextTokens)?contextTokens:null,eligibility,reason,nextStep}
 }
 async function refresh($) {
@@ -97,9 +132,10 @@ function schedule($, delay = 2000) {
   timer?.cancel()
   timer = $.clock.after(delay, () => { void assess($).catch(() => {}) })
 }
-async function provider($, text, revision) {
-  const key = (await $.env.get('TYPESAFE_API_KEY'))?.trim()
-  if (!key || /[\r\n]/.test(key)) return {status:'missing-key'}
+async function provider($, text, revision, credentialTest=false) {
+  const {key,generation} = await resolveCredential($)
+  if (!key) return {status:'missing-key'}
+  if (!credentialTest && credentials.status().state==='rejected') return {status:'authentication-rejected'}
   if (physicalFlight) return {status:'busy'}
   physicalFlight = true
   let started=false
@@ -108,7 +144,7 @@ async function provider($, text, revision) {
   try {
     const configuredModel = (await $.env.get('TYPESAFE_MODEL'))?.trim() || 'jev-latest'
     const now=await $.clock.now()
-    if(busy||revision!==advisor.revision||mode==='off'||classifier!=='jev'||!classificationEligibility(input(text)).eligible)return {status:'stale'}
+    if(busy||(!credentialTest&&(revision!==advisor.revision||mode==='off'||classifier!=='jev'||!classificationEligibility(input(text)).eligible)))return {status:'stale'}
     lastCall=now;classifierCalls++;started=true
     const request = $.http.fetch('https://api.typesafe.ai/v1/systemone', {
       method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(jevRequest(text,configuredModel)),
@@ -119,6 +155,7 @@ async function provider($, text, revision) {
     })
     const response = await Promise.race([request,new Promise(resolve => {deadline=$.clock.after(1500,()=>{expired=true;resolve(null)})})])
     if (!response) return {status:'timeout-or-network-error'}
+    credentials.observe(generation,response.status);render($)
     if (!response.ok) return {status:'http-error',httpStatus:response.status}
     if (response.text.length > 65536) return {status:'invalid-response'}
     const data=JSON.parse(response.text)
@@ -147,7 +184,7 @@ async function assess($) {
     if (wait > 0) { assessmentPhase='waiting for call interval';render($);schedule($,wait); return }
     assessmentPhase='assessing draft';render($)
     evidence = await provider($,advisor.text,revision)
-    if (!['stale','missing-key','busy','timeout-or-network-error','http-error','invalid-response'].includes(evidence.status)) {
+    if (!['stale','missing-key','authentication-rejected','busy','timeout-or-network-error','http-error','invalid-response'].includes(evidence.status)) {
       cache.set(key,evidence);if(cache.size>32)cache.delete(cache.keys().next().value)
     }
   }
@@ -197,6 +234,7 @@ export function register(on) {
   on('session.start', async ($,e,next)=>{
     try {
       await refresh($)
+      await resolveCredential($)
       const turns=await $.session.turns();activeTask=turns>0;freshSession=turns===0
       await $.command.register({name:'route',description:'Model Pilot: draft advice with explicit acceptance',argumentHint:'[status|trace|profiles|accept ID|dismiss ID|check PROMPT|advise|off|pin|unpin|new]'})
     } catch { activeTask=true }
@@ -258,7 +296,7 @@ export function register(on) {
     const currentEffort=sticky?.effort ?? effort
     const state=bandStatus()
     const protectedState=/protected|pinned/.test(state)
-    const attention=/missing|unavailable/.test(state)
+    const attention=/missing|unavailable|rejected/.test(state)
     const ready=/advice ready|accepted/.test(state)
     const waiting=/waiting|assessing/.test(state)
     const icon=protectedState?'🔒':attention?'⚠️':ready?'✨':waiting?'⏳':'💤'
@@ -267,9 +305,12 @@ export function register(on) {
     const statusLine=Box({flexDirection:'row',alignItems:'center',columnGap:1,paddingX:1,flexWrap:'wrap',children:[
       Text({key:'brand',color:'cyan',children:['🧭 Model Pilot']}),
       separator('model-separator'),
+      Text({key:'mascot',color:'#D97757',children:['▐▛███▜▌']}),
       Text({key:'model',bold:true,children:[current[0].toUpperCase()+current.slice(1)]}),
       ...(currentEffort?[Text({key:'effort',dimColor:true,children:[`· ${currentEffort}`]})]:[]),
       separator('state-separator'),
+      Text({key:'credential',dimColor:true,children:[`🔑 ${credentials.status().state==='verified'?'connected':credentials.status().state==='unverified'?'key ready':credentials.status().state==='missing'?'setup needed':`key ${credentials.status().state}`}`]}),
+      separator('key-separator'),
       Text({key:'state',...(tone?{color:tone}:{dimColor:true}),children:[`${icon} ${state}`]}),
       separator('help-separator'),
       Text({key:'help',dimColor:true,children:['/route']}),
@@ -288,6 +329,31 @@ export function register(on) {
   })
   on('command.run',{command:'route'},async($,e)=>{
     const raw=e.args.trim();const arg=raw.toLowerCase()
+    if(arg==='key'||arg.startsWith('key ')) {
+      const action=arg.slice(3).trim()
+      if(['setup','replace'].includes(action))return {text:keySetup($)}
+      if(action==='remove')return {text:'Use /route key remove confirm to delete Model Pilot’s saved TypeSafe key from macOS Keychain for all projects. This does not revoke it at TypeSafe or remove environment overrides. Other sessions reload on their next key check; already-sent requests cannot be recalled.'}
+      if(action==='remove confirm') {
+        try {
+          const result=await $.process.run(['python3',$.plugin.root+'/scripts/keychain.py','remove'],{timeoutMs:3000})
+          if(result.exitCode!==0||JSON.parse(result.stdout).state!=='removed')throw new Error('keychain-delete-failed')
+          credentials.removeSaved();cache.clear();invalidateCredentialAdvice($);await resolveCredential($);render($)
+          return {text:`Saved key removed from Model Pilot’s macOS Keychain entry. ${keySummary()} Revoke it separately in TypeSafe if needed.`}
+        } catch {return {text:'Model Pilot could not confirm removal. Unlock macOS Keychain and retry, or run its keychain.py remove helper in your terminal. No other credentials were targeted.'}}
+      }
+      await resolveCredential($);render($)
+      if(!action||action==='status')return {text:keySummary()+' Use /route key setup, test, or remove.'}
+      if(action==='test')return {text:'Use /route key test confirm to send one synthetic authentication check to TypeSafe. It may be billable. No draft or conversation is included; it does not create advice or change any model.'}
+      if(action==='test confirm') {
+        if(physicalFlight||busy)return {text:'A request is already running. Try the key test after it finishes.'}
+        const now=await $.clock.now()
+        if(now-lastCall<10000)return {text:'Wait ten seconds between TypeSafe calls before testing again.'}
+        timer?.cancel()
+        const result=await provider($,'What does HTTP stand for?',advisor.revision,true)
+        return {text:`${keySummary()} Test outcome: ${result.status}${Number.isInteger(result.httpStatus)?` (HTTP ${result.httpStatus})`:''}. No model change or advice acceptance.`}
+      }
+      return {text:'Usage: /route key [setup|replace|status|test|remove]. Never include a key value in this command.'}
+    }
     if(arg==='trace')return {text:JSON.stringify({schemaVersion:2,versions,diagnostics:await diagnostics($),trace,recommendation:advisor.record,counters:advisor.counters,classifierCalls,classifierTokens})}
     if(arg==='profiles')return {text:JSON.stringify({schemaVersion:2,profileVersion:PROFILE_VERSION,profiles:PROFILES,modelIds:await loadModelIds($)})}
     if(arg==='auto')return {text:'Automatic routing was removed in 0.6. Use the suggestion’s “Use for this task” button or /route accept <id>. No request changes without individual acceptance.'}
@@ -318,9 +384,9 @@ export function register(on) {
     else if(arg==='classifier off'){classifier=false;invalidate($)}
     else if(['classifier jev','classifier on'].includes(arg)){classifier='jev';invalidate($)}
     else if(arg==='classifier haiku')return {text:'0.6 uses Jev for quality assessment. The legacy Haiku classifier is retired; use /route classifier jev or off.'}
-    else if(arg&&arg!=='status')return {text:'Usage: /route [status|trace|profiles|check PROMPT|accept ID|dismiss ID|advise|off|pin|unpin|new|classifier jev|classifier off]'}
+    else if(arg&&arg!=='status')return {text:'Usage: /route [status|key setup|key status|key test|key remove|trace|profiles|check PROMPT|accept ID|dismiss ID|advise|off|pin|unpin|new|classifier jev|classifier off]'}
     const d=await diagnostics($)
-    return {text:`Model Pilot 0.6.3 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'} (presence only, not authentication verified). Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
+    return {text:`Model Pilot 0.7.0 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'}. ${keySummary()} Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
   })
   on('turn.start',async($,e,next)=>{
     if(e.agentId)return next(e)

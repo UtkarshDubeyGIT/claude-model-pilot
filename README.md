@@ -4,7 +4,7 @@
 
 Model Pilot recommends a better **quality–cost tradeoff** when there is enough evidence. It can suggest a smaller model, stronger reasoning, or a different effort on the same model. Speed is secondary. Reduced depth or polish may be acceptable; correctness, safety, required functionality and output format remain requirements.
 
-**0.6.3 experimental · MIT · tested with Claude Code 2.1.306.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
+**0.7.0 experimental · MIT · tested with Claude Code 2.1.308.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
 
 ## Install
 
@@ -13,14 +13,15 @@ claude plugin marketplace add UtkarshDubeyGIT/claude-model-router-mod
 claude plugin install model-pilot@model-pilot-marketplace --scope user
 ```
 
-Create a key in the [TypeSafe console](https://console.typesafe.ai). Enter it privately in **zsh**, then launch Claude from the same shell:
+Create a key in the [TypeSafe console](https://console.typesafe.ai). On **macOS**, run this inside Claude:
 
-```zsh
-read -rs 'TYPESAFE_API_KEY?TypeSafe API key: '
-export TYPESAFE_API_KEY
-printf '\n'
-claude
+```text
+/route key setup
 ```
+
+It gives you a terminal command for a hidden-input setup helper. Run that command in a separate terminal and enter the key there. The helper saves it directly to **macOS Keychain**; it does not write a credentials file. Python 3 is required for saved-key support. Then run `/route key status` in Claude—no restart or repeated export is needed. Subsequent sessions load the saved key automatically.
+
+On Windows/Linux, or for enterprise secret-manager injection, supply `TYPESAFE_API_KEY` in the shell launching Claude. An explicit environment key takes priority over the saved key. [All setup methods and key management](docs/INSTALL.md#set-the-typesafe-key).
 
 **Advice is enabled by default. Eligible unfinished drafts are sent to TypeSafe after you stop editing, even if you never send them to Claude.** TypeSafe charges are separate. The mod keeps drafts and cached assessments only in session memory; it does not write prompt logs. `/route off` stops new assessments. Never paste a key into chat or a command argument.
 
@@ -28,11 +29,11 @@ claude
 
 ## Verify that advice can run
 
-Run `/route status` in Claude after installation. It reports the current protection, whether the key is present (not whether authentication succeeded), permission state, and the last assessment reason. No API call is made by this command.
+Run `/route status` in Claude after installation. It reports the current protection, key source and authentication state (presence alone does not verify it), permission state, and the last assessment reason. No API call is made by this command.
 
 - **Ongoing task protected:** Jev is deliberately skipped. Finish that task, then use `/route new` only when starting an independent task. Follow-ups, asides and related implementation remain protected.
 - **Permission state is unknown:** this also occurs in a fresh interactive terminal on the tested host, even when its footer says “auto mode on.” The mod waits for authoritative lifecycle state, which may arrive only with the first normal answer. After finishing that task, use `/route new`. Do not bypass the guard.
-- **Key missing:** restart Claude from the shell where you exported the key.
+- **Key missing:** use `/route key setup`, or restart Claude from the shell where you exported the key. **Key unavailable:** unlock macOS Keychain and check that Python 3 is installed; no plaintext fallback is used.
 - **No card after an eligible assessment:** the current profile may fit, Jev may abstain, or context reload may outweigh savings. `/route trace` distinguishes these. A suggestion is not a loading indicator.
 
 For a small test, use a separate, low-context session. After permission state is known and the initial task is complete, run `/route new`, type `What does HTTP stand for?`, and pause without sending. A card requires a suitable current profile and confident live Jev evidence; it is not guaranteed. `/route check What does HTTP stand for?` explicitly assesses the same draft and prints the outcome. Both draft assessment and `/route check` use TypeSafe and are separately billed.
@@ -44,7 +45,7 @@ Claude’s **“auto mode on” footer controls tool permissions**. It does not 
 The compact status line uses an emoji compass, a bold model name, muted dividers and state icons, alongside other mods such as Token Weather:
 
 ```text
-🧭 Model Pilot │ Sonnet · high │ 🔒 task protected │ /route
+🧭 Model Pilot │ ▐▛███▜▌ Sonnet · high │ 🔑 key ready │ 🔒 task protected │ /route
 ```
 
 It appears above the composer immediately after loading. Claude controls this band: a survey temporarily takes precedence, and users can collapse/expand it with `ctrl+x ctrl+a`. `/route off` leaves an “off” indicator visible and stops assessment/application.
@@ -64,6 +65,10 @@ The host must expose permission state before assessment. Some hosts, including t
 | Command | Purpose |
 | --- | --- |
 | `/route status` | Protections, active profile, provider state and separate counters |
+| `/route key setup` / `/route key replace` | Show the hidden-input Keychain helper command |
+| `/route key status` | Key source and missing/unverified/verified/rejected state, never its value |
+| `/route key test` | Explain an optional, potentially billable synthetic check; `test confirm` sends it |
+| `/route key remove` | Explain local deletion; `remove confirm` deletes only Model Pilot's saved entry |
 | `/route trace` | Sanitized evidence and application outcome; no draft text |
 | `/route profiles` | Initial mappings and deployment IDs |
 | `/route accept <id>` | Accept the displayed advice for its matching draft/task |
@@ -91,7 +96,7 @@ Version 0.6 adds **24 calibration + 24 held-out scenarios** and measures useful 
 
 ## Develop and evaluate
 
-No runtime dependencies or build step. Development needs Node 20+, Python 3.9+ and a compatible Claude Code CLI.
+No npm dependencies or build step. Saved macOS keys require Python 3 and an accessible Keychain; environment-only use does not. Development needs Node 20+, Python 3.9+ and a compatible Claude Code CLI.
 
 ```sh
 npm test
@@ -99,6 +104,8 @@ npm run test:eval
 npm run test:mod
 npm run validate
 npm run test:host
+# macOS only: isolated dummy Keychain lifecycle, no real credential or network
+npm run test:credentials -- --host
 python3 scripts/evaluate-advice.py --policy-replay --split all
 ```
 

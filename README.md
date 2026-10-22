@@ -4,7 +4,7 @@
 
 Model Pilot recommends a better **quality–cost tradeoff** when there is enough evidence. It can suggest a smaller model, stronger reasoning, or a different effort on the same model. Speed is secondary. Reduced depth or polish may be acceptable; correctness, safety, required functionality and output format remain requirements.
 
-**0.6.1 experimental · MIT · tested with Claude Code 2.1.306.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
+**0.6.2 experimental · MIT · tested with Claude Code 2.1.306.** Independent of Anthropic and TypeSafe. Advice is a prediction, not a guarantee of answer quality or savings.
 
 ## Install
 
@@ -41,7 +41,9 @@ Claude’s **“auto mode on” footer controls tool permissions**. It does not 
 
 ## How it feels
 
-Pause typing for two seconds. When a change is justified, one compact suggestion appears above the composer with the proposed model/effort, expected benefit, tradeoff, and **Use for this task / Dismiss** buttons. Otherwise the advisor stays quiet. Focus the band with `ctrl+x tab` or click it to use the buttons.
+The status line appears above the composer immediately after loading, alongside other mods such as Token Weather. Claude controls this band: a survey temporarily takes precedence, and users can collapse/expand it with `ctrl+x ctrl+a`. `/route off` leaves an “off” indicator visible and stops assessment/application.
+
+Pause typing for two seconds. When a change is justified, one compact suggestion appears above the composer with the proposed model/effort, expected benefit, tradeoff, and **Use for this task / Dismiss** buttons. A compact Model Pilot status line remains visible even when there is no recommendation. It shows the current profile and states such as waiting for session state, task protected, assessing draft, insufficient evidence, or off. Rendering the line makes no provider calls. Focus the band with `ctrl+x tab` or click it to use the buttons.
 
 Sending before advice is ready uses your current selection. Accepting authorizes only the displayed recommendation for the matching draft and task. Editing the task draft or changing model, effort, mode or task boundary invalidates unconsumed acceptance. The mod never delays submission to wait for Jev and never replays a started request.
 
@@ -49,7 +51,7 @@ Once the API confirms an accepted model, its requested effort and model remain a
 
 **Planning continuity is a hard constraint.** Plan → follow-up → simple aside → implementation → return to plan stays on the task profile. Leaving plan mode, or typing “Unrelated question:”, does not unlock it. `/route new` establishes a new task, but cannot override plan mode or a pin. Resumed sessions protect their host-selected profile; in-memory advice and acceptance do not survive a reload.
 
-The host must expose permission state before assessment. Some hosts, including the tested headless CLI, do so only after the first answer. Model Pilot stays quiet while state is unknown. After finishing that task, `/route new` explicitly starts an eligible task. Do not disable the guard to force advice.
+The host must expose permission state before assessment. Some hosts, including the tested headless CLI, do so only after the first answer. The status line says “waiting for session state”; no draft is assessed while state is unknown. After finishing that task, `/route new` explicitly starts an eligible task. Do not disable the guard to force advice.
 
 ## Commands
 

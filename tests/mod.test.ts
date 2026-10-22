@@ -56,6 +56,45 @@ async function step($,id='t',index=0,extra={}){
 async function check($,text=TEXT){await cmd($,'check '+text);return (await trace($)).recommendation}
 async function accepted($,text=TEXT){const r=await check($,text);expect(r.acceptance).toBe('suggested');await cmd($,'accept '+r.id);return r}
 async function edit($,text){await $.prompt.edit({text:'',cursor:0,start:0,end:0,inputText:text,kind:'insert'})}
+async function expectBand($,text,props={},surface='terminal'){
+ const ui=await $.ui.mount({plugin:'model-pilot',surface,component:'AbovePrompt',props})
+ expect(await ui.find({type:'Text',text})).toBeDefined()
+ expect(await ui.find({type:'Text',text:'Other mod'})).toBeDefined()
+ await ui.unmount()
+}
+
+test('persistent band explains startup without a draft or provider call',async($,on)=>{
+ host(on,{model:'claude-sonnet-5-5',unknownEffort:true});const f=jev(on);await boot($,'')
+ for(const surface of ['terminal','desktop'])await expectBand($,/Model Pilot · sonnet · waiting for session state/,{},surface)
+ expect(f.calls()).toBe(0)
+})
+test('persistent band shows protected work during a turn and off after disabling',async($,on)=>{
+ const seen=host(on);const f=jev(on);await boot($,'plan')
+ await start($,'Plan the work','t','plan')
+ await expectBand($,/planning protected/,{isWorking:true})
+ await step($);await cmd($,'off');await expectBand($,/Model Pilot .*off/)
+ expect(f.calls()).toBe(0);expect(seen[0].model).toBe('claude-opus-5-5')
+})
+test('persistent band distinguishes assessment, abstention and edited drafts',async($,on)=>{
+ host(on);const f=jev(on,'simple',{confidence:0.8,delay:500});await boot($)
+ await expectBand($,/ready for a new draft/)
+ await edit($,TEXT);await f.clock.advance(2000)
+ await expectBand($,/assessing draft/)
+ await f.clock.advance(500);await f.clock.settle()
+ await expectBand($,/insufficient evidence/)
+ await edit($,'Define DNS');await expectBand($,/waiting for typing to pause/)
+ expect(f.calls()).toBe(1)
+})
+test('persistent band explains missing keys without showing draft contents',async($,on)=>{
+ host(on);jev(on,'simple',{noKey:true});await boot($);await check($)
+ await expectBand($,/TypeSafe key missing/)
+})
+test('persistent band marks advice and dismissal without granting consent',async($,on)=>{
+ host(on);jev(on);await boot($);const r=await check($)
+ await expectBand($,/advice ready/)
+ await cmd($,'dismiss '+r.id);await expectBand($,/suggestion dismissed/)
+ expect((await trace($)).counters.accepted).toBe(0)
+})
 
 test('auto migrates and never authorizes requests',async($,on)=>{
  const seen=host(on);jev(on);await boot($);expect((await cmd($,'auto')).text).toContain('removed')

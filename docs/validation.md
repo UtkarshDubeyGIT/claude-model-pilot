@@ -1,3 +1,15 @@
+# Validation record — 0.6.2 experimental
+
+22 October 2026, Claude Code **2.1.306**. This patch adds a persistent composer status line; it does not change recommendation or application policy.
+
+- 85 portable tests, 49 native mod tests and 31 Python tests passed (165 total). Five new native tests first failed with the old conditional UI, then passed with persistent status. They cover terminal/desktop startup without draft or provider calls, protected/off states, assessment-to-abstention transitions, stale draft status, missing keys and dismissal without consent. Other mods' rendered content remains present.
+- Strict validation passed with the existing optional listing-icon warning. All four real-host synthetic scenarios passed, including Opus planning continuity.
+- An isolated interactive terminal displayed the status line before any prompt or command, showing the host model and unknown session state with zero model requests. This is display verification, not live Jev calibration.
+
+The host owns band collapse and survey precedence; either can temporarily hide the line. A visible line confirms the mod loaded, not successful TypeSafe authentication. All model/provider integration responses were synthetic; no new savings or recommendation-quality claim is made.
+
+---
+
 # Validation record — 0.6.1 experimental
 
 22 October 2026, Claude Code **2.1.306**. This patch improves diagnosis and installation instructions; it does not relax recommendation gates or task protection.

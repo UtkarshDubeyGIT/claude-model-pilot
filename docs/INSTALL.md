@@ -60,9 +60,11 @@ Inside Claude Code:
 
 Advice is enabled and Jev is the provider. **Eligible unfinished drafts go to TypeSafe after two seconds without editing**, whether or not you submit them. The mod stores no persistent drafts. Calls are separately billed. Use `/route off` to stop new assessment.
 
+A compact Model Pilot status line appears above the composer before you type, including when advice is unavailable or off. It preserves other mods in that band and makes no Jev request merely to render. Claude surveys take precedence; if you collapsed the band, expand it with `ctrl+x ctrl+a`. The line confirms the mod loaded, not that TypeSafe authentication succeeded.
+
 Type a harmless standalone draft. When eligible and supported by confident evidence, a card offers **Use for this task / Dismiss**. Sending without acceptance keeps your current profile. Silence can mean the current profile fits, continuity protects it, or evidence is unavailable. Inspect `/route trace` for the distinction.
 
-The host must expose permission state first. This includes a fresh interactive terminal on the tested host: the visible “auto mode on” footer does not establish permission state for the mod. Some hosts expose it only with the first normal answer. The mod stays quiet while it is unknown; after finishing that task, `/route new` starts a new independent task. Headless clients can explicitly assess with `/route check <prompt>`, accept the returned ID with `/route accept <id>`, then send the exact prompt. Do not issue `/route new` in the middle of work merely to force a suggestion.
+The host must expose permission state first. This includes a fresh interactive terminal on the tested host: the visible “auto mode on” footer does not establish permission state for the mod. Some hosts expose it only with the first normal answer. The status line shows “waiting for session state” while it is unknown, and no assessment runs; after finishing that task, `/route new` starts a new independent task. Headless clients can explicitly assess with `/route check <prompt>`, accept the returned ID with `/route accept <id>`, then send the exact prompt. Do not issue `/route new` in the middle of work merely to force a suggestion.
 
 Accepted profiles are applied at dispatch, then retained for task follow-ups only after API model confirmation. Effort is the requested effort; provider-internal effort is not independently observable. Editing the draft or changing model, effort, mode or task boundary invalidates unconsumed acceptance. `/route auto` only explains this migration.
 

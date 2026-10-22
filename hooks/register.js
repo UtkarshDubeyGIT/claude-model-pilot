@@ -13,6 +13,7 @@ let controlDraft = false, clearTimer, clearing = false
 let timer, physicalFlight = false, lastCall = -Infinity, busy = false
 let attachments = false, queueProtected = false, pending = null, submitted = null, sticky = null
 let trace = null, classifierCalls = 0, classifierTokens = 0
+let assessmentRevision = -1, assessmentPhase = null
 const cache = new Map() // Bounded, session-only; never serialized.
 const versions = { assessment: JEV_QUESTION_VERSION, protection: PROTECTION_VERSION, comparison: COMPARISON_VERSION, presentation: PRESENTATION_VERSION, profiles: PROFILE_VERSION }
 const validEffort = value => ['low','medium','high','xhigh','max'].includes(value)
@@ -24,6 +25,29 @@ function input(text) {
     planMode, activeTask, freshSession, contextTokens, attachments: attachments || queueProtected}
 }
 function contextKey() { return JSON.stringify([model,effort,permissionKnown,planMode,activeTask,pinned,advisor.task,contextTokens,freshSession,attachments,queueProtected]) }
+// Presentation only: rendering never reads a draft, calls Jev or authorizes a change.
+function bandStatus() {
+  if(mode==='off')return 'off'
+  if(classifier!=='jev')return 'Jev disabled'
+  if(pinned)return 'model pinned'
+  if(!permissionKnown)return 'waiting for session state'
+  if(planMode)return 'planning protected'
+  if(activeTask)return 'task protected'
+  if(attachments||queueProtected)return 'attached or queued context protected'
+  const r=advisor.record
+  if(r&&advisor.valid(r.id))return {suggested:'advice ready',accepted:'accepted · send matching draft',dismissed:'suggestion dismissed'}[r.acceptance] || 'waiting for draft'
+  if(!advisor.text.trim())return 'ready for a new draft'
+  if(assessmentRevision!==advisor.revision)return 'waiting for typing to pause'
+  if(assessmentPhase)return assessmentPhase
+  const p=trace?.provider
+  if(p?.status==='missing-key')return 'TypeSafe key missing'
+  if(p?.status==='abstained')return 'insufficient evidence'
+  if(['timeout-or-network-error','http-error','invalid-response'].includes(p?.status))return 'Jev unavailable'
+  if(trace?.application==='unmapped-target')return 'target mapping missing'
+  if(p?.status==='skipped')return 'draft protected'
+  if(trace?.decision?.action==='keep')return 'no change suggested'
+  return 'waiting for assessment'
+}
 function assessmentSummary() {
   const p=trace?.provider
   if (!p) return 'No draft assessment yet.'
@@ -112,20 +136,23 @@ async function assess($) {
   const current = input(advisor.text)
   const eligibility = classificationEligibility(current)
   trace = {provider:{name:'jev',status:'skipped',reason:eligibility.reason},application:'not-dispatched',planMode,versions}
-  if (!eligibility.eligible) return
+  assessmentRevision=revision;assessmentPhase=null
+  if (!eligibility.eligible) { render($);return }
   const fingerprint = contextKey()
   const key = JSON.stringify([advisor.text,fingerprint])
   let evidence = cache.get(key)
   if (!evidence) {
-    if (physicalFlight) { schedule($); return }
+    if (physicalFlight) { assessmentPhase='waiting for Jev';render($);schedule($); return }
     const wait = 10000 - ((await $.clock.now()) - lastCall)
-    if (wait > 0) { schedule($,wait); return }
+    if (wait > 0) { assessmentPhase='waiting for call interval';render($);schedule($,wait); return }
+    assessmentPhase='assessing draft';render($)
     evidence = await provider($,advisor.text,revision)
     if (!['stale','missing-key','busy','timeout-or-network-error','http-error','invalid-response'].includes(evidence.status)) {
       cache.set(key,evidence);if(cache.size>32)cache.delete(cache.keys().next().value)
     }
   }
   if (busy || revision !== advisor.revision || fingerprint !== contextKey()) return
+  assessmentPhase=null
   trace.provider = {name:'jev',...evidence}
   const decision = recommend({...current,requireClassifier:true,classification:evidence.classification,
     requirementsMet:evidence.status==='accepted' && evidence.signals?.requirements?.choice==='sufficient'})
@@ -173,6 +200,7 @@ export function register(on) {
       const turns=await $.session.turns();activeTask=turns>0;freshSession=turns===0
       await $.command.register({name:'route',description:'Model Pilot: draft advice with explicit acceptance',argumentHint:'[status|trace|profiles|accept ID|dismiss ID|check PROMPT|advise|off|pin|unpin|new]'})
     } catch { activeTask=true }
+    render($)
     return next(e)
   })
   on('classic.SessionStart',($,e,next)=>{permission($,e.permission_mode);return next(e)})
@@ -222,12 +250,13 @@ export function register(on) {
   })
   on('ui.render',{component:'AbovePrompt'},async($,e,next)=>{
     const rest=await next(e)
-    if(mode==='off'||clearing||e.props?.hasSurvey||e.props?.isWorking)return rest
+    if(e.props?.hasSurvey)return rest
     const {Box,Text,Button}=$.ui.resolve(e)
     const r=advisor.record
-    const shown=r && advisor.valid(r.id) && ['suggested','accepted'].includes(r.acceptance)
-    if(!shown&&!sticky)return rest
-    const children=[rest]
+    const shown=mode!=='off'&&!clearing&&!busy&&!e.props?.isWorking&&r && advisor.valid(r.id) && ['suggested','accepted'].includes(r.acceptance)
+    const current=sticky?.label || family(model) || 'host model'
+    const currentEffort=sticky?.effort ?? effort
+    const children=[rest,Text({dimColor:true,children:[`Model Pilot · ${current}${currentEffort?` / ${currentEffort}`:''} · ${bandStatus()} · /route status`]})]
     if(sticky) children.push(Text({dimColor:true,children:[`Model Pilot · active task: ${sticky.label} / ${sticky.effort} (API model confirmed; effort requested)`]}))
     if(shown) {
       children.push(Text({children:[`Model Pilot ${r.id} · ${r.proposed.model} / ${r.proposed.effort} · ${r.benefit} ${r.tradeoff}`]}))
@@ -273,7 +302,7 @@ export function register(on) {
     else if(arg==='classifier haiku')return {text:'0.6 uses Jev for quality assessment. The legacy Haiku classifier is retired; use /route classifier jev or off.'}
     else if(arg&&arg!=='status')return {text:'Usage: /route [status|trace|profiles|check PROMPT|accept ID|dismiss ID|advise|off|pin|unpin|new|classifier jev|classifier off]'}
     const d=await diagnostics($)
-    return {text:`Model Pilot 0.6.1 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'} (presence only, not authentication verified). Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
+    return {text:`Model Pilot 0.6.2 experimental: ${mode}; ${pinned?'pinned':'unpinned'}; ${activeTask?'ongoing task protected':'new task'}.\nPre-send advice sends eligible unfinished drafts to TypeSafe, separately billed. No persistent draft logs. /route off disables advice.\nPermission: ${d.permission}; Key: ${d.keyConfigured===null?'unknown':d.keyConfigured?'present':'missing'} (presence only, not authentication verified). Context tokens: ${d.contextTokens??'unknown'}.\nCurrent eligibility: ${d.reason}\n${d.nextStep}\nLast assessment: ${assessmentSummary()}\nProvider: ${trace?.provider?.status||'not-run'}; application: ${trace?.application||'none'}.\nSuggested ${advisor.counters.suggested}; accepted ${advisor.counters.accepted}; dispatched ${advisor.counters.dispatched}; confirmed ${advisor.counters.confirmed}. Classifier calls ${classifierCalls}; reported tokens ${classifierTokens}.\nActive task profile: ${sticky?`${sticky.label}/${sticky.effort}`:'host selection'}. Saved defaults unchanged. /route new establishes a task boundary; plan mode and pins still apply.`}
   })
   on('turn.start',async($,e,next)=>{
     if(e.agentId)return next(e)

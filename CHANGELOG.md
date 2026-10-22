@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2 experimental — 2026-10-22
+
+- Keep a compact Model Pilot status line above the composer before the first draft, while task protection is active, during turns, and when advice is off. Preserve other mods; yield to host surveys and respect host band collapse.
+- Show draft assessment progress, provider/key failures, insufficient evidence, advice readiness and dismissal without treating silence as proof of optimality. Ignore assessment status from older draft revisions.
+- Keep rendering read-only and free of provider calls. Recommendation gates, explicit acceptance and planning continuity are unchanged. Presentation component version is now 2.
+- Add five native tests for persistent terminal/desktop status, protected/off states, assessment transitions, missing keys and dismissal.
+
 ## 0.6.1 experimental — 2026-10-22
 
 - Explain silent advice directly in `/route status`: permission state, key presence without its value, current protection, context size and the last assessment reason. Add the same safe diagnostics to trace; diagnostic commands do not call Jev.

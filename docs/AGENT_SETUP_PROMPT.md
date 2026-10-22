@@ -1,7 +1,7 @@
 # Give this prompt to your agent
 
 ```text
-Install Model Pilot 0.6.1 experimental from:
+Install Model Pilot 0.6.2 experimental from:
 https://github.com/UtkarshDubeyGIT/claude-model-router-mod
 
 Read README.md, docs/INSTALL.md and SECURITY.md. Inspect the plugin manifests
@@ -23,7 +23,9 @@ chat, or recover it from another process. If missing, show the hidden-input
 command for my shell and let me enter it privately. Another terminal's export
 does not automatically reach your command runner.
 
-Verify plugin list and /route status where available. Report key presence,
+Verify plugin list, the persistent Model Pilot line above the composer, and
+/route status where available. The line makes no provider calls; Claude surveys
+or a collapsed band can hide it. /route off leaves an off indicator visible. Report key presence,
 permission state, current eligibility and last assessment reason. Do not
 promise a recommendation for every prompt. Zero calls with an ongoing task
 means continuity protection; use /route new only after that task is finished. Explain /route check,
